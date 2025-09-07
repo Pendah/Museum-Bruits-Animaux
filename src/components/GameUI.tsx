@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import type { Animal } from "../types";
+import { NavigationSwitch } from "./NavigationSwitch";
 
 interface GameUIProps {
   isListening: boolean;
@@ -9,6 +10,9 @@ interface GameUIProps {
   onShowAnimalInfo: (animal: Animal) => void;
   showPermissionPrompt: boolean;
   onRequestPermission: () => void;
+  useGyroscope: boolean;
+  onToggleNavigation: (useGyroscope: boolean) => void;
+  gyroscopeAvailable: boolean;
 }
 
 export const GameUI: React.FC<GameUIProps> = ({
@@ -19,6 +23,9 @@ export const GameUI: React.FC<GameUIProps> = ({
   onShowAnimalInfo,
   showPermissionPrompt,
   onRequestPermission,
+  useGyroscope,
+  onToggleNavigation,
+  gyroscopeAvailable,
 }) => {
   return (
     <div className="game-ui">
@@ -53,6 +60,12 @@ export const GameUI: React.FC<GameUIProps> = ({
         <div className="progress-indicator">
           <span>Animaux découverts: {discoveredAnimals.length}</span>
         </div>
+
+        <NavigationSwitch
+          useGyroscope={useGyroscope}
+          onToggle={onToggleNavigation}
+          gyroscopeAvailable={gyroscopeAvailable}
+        />
 
         {!isListening ? (
           <div className="start-screen">

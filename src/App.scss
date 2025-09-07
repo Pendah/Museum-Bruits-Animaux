@@ -29,6 +29,13 @@ body {
   width: 100vw;
   height: 100vh;
   position: relative;
+  
+  canvas {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    z-index: 1 !important;
+  }
 }
 
 // Interface utilisateur
@@ -39,7 +46,7 @@ body {
   right: 0;
   bottom: 0;
   pointer-events: none;
-  z-index: 100;
+  z-index: 10;
 
   .ui-overlay {
     position: relative;
@@ -50,8 +57,38 @@ body {
     flex-direction: column;
     pointer-events: none;
 
-    * {
+    // Seuls les éléments d'interface sont cliquables
+    .app-header,
+    .progress-indicator,
+    .navigation-switch,
+    .start-screen,
+    .discovered-animals,
+    .permission-modal {
       pointer-events: auto;
+      
+      // Réactiver tous les éléments enfants pour ces composants
+      * {
+        pointer-events: auto;
+      }
+    }
+
+    // listening-ui : seuls les éléments visibles sont cliquables
+    .listening-ui {
+      pointer-events: none;
+      
+      .listening-indicator,
+      .animal-found {
+        pointer-events: auto;
+        
+        * {
+          pointer-events: auto;
+        }
+      }
+    }
+
+    // Les autres éléments restent transparents aux clics
+    > * {
+      pointer-events: none;
     }
   }
 
@@ -228,6 +265,7 @@ body {
   justify-content: center;
   z-index: 1000;
   padding: 20px;
+  pointer-events: auto; // Bloque complètement les interactions avec le canvas
 }
 
 .animal-modal {
@@ -328,6 +366,7 @@ body {
   justify-content: center;
   z-index: 2000;
   padding: 20px;
+  pointer-events: auto; // Bloque complètement les interactions avec le canvas
 
   .modal-content {
     background: $background-dark;
@@ -410,5 +449,75 @@ body {
     width: 40px;
     height: 40px;
     font-size: 1.2rem;
+  }
+}
+
+// Switch de navigation
+.navigation-switch {
+  position: absolute;
+  top: 80px;
+  right: 20px;
+  background: $background-dark;
+  padding: 15px;
+  border-radius: $border-radius;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  min-width: 200px;
+
+  .switch-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  .switch-label {
+    font-size: 0.9rem;
+    opacity: 0.6;
+    transition: $transition;
+    
+    &.active {
+      opacity: 1;
+      color: $accent-color;
+    }
+  }
+
+  .switch-track {
+    width: 48px;
+    height: 24px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    position: relative;
+    cursor: pointer;
+    transition: $transition;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+  }
+
+  .switch-thumb {
+    width: 20px;
+    height: 20px;
+    background: $accent-color;
+    border-radius: 50%;
+    position: absolute;
+    top: 2px;
+    left: 2px;
+  }
+
+  .switch-description {
+    font-size: 0.8rem;
+    opacity: 0.7;
+    margin: 0;
+    text-align: center;
+  }
+}
+
+@media (max-width: 768px) {
+  .navigation-switch {
+    top: 70px;
+    right: 15px;
+    min-width: 180px;
+    padding: 12px;
   }
 }

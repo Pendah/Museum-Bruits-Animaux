@@ -22,6 +22,7 @@ function App() {
   const [playerDirection, setPlayerDirection] = useState<THREE.Vector3>(
     new THREE.Vector3(0, 0, -1)
   );
+  const [useGyroscope, setUseGyroscope] = useState(true);
 
   const { orientation, permission, requestPermission } = useDeviceOrientation();
   const {
@@ -29,6 +30,7 @@ function App() {
     playAnimalSound,
     stopAllSounds,
     updateListenerOrientation,
+    playAmbiance,
   } = useSpatialAudio();
 
   const startListening = useCallback(async () => {
@@ -42,6 +44,9 @@ function App() {
 
     await initializeAudioContext();
     setGameState((prev) => ({ ...prev, isListening: true }));
+    
+    // Démarrer l'ambiance sonore
+    await playAmbiance();
 
     // Démarrer avec le premier animal non découvert
     const undiscoveredAnimals = animals.filter(
@@ -161,6 +166,7 @@ function App() {
       <Scene360
         textureUrl="/assets/textures/forest-night-360.jpg"
         onDirectionChange={handleDirectionChange}
+        useGyroscope={useGyroscope}
       />
 
       <GameUI
@@ -171,6 +177,9 @@ function App() {
         onShowAnimalInfo={showAnimalInfo}
         showPermissionPrompt={false}
         onRequestPermission={requestPermission}
+        useGyroscope={useGyroscope}
+        onToggleNavigation={setUseGyroscope}
+        gyroscopeAvailable={permission !== 'denied'}
       />
 
       <AnimalModal

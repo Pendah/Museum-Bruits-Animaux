@@ -6,6 +6,7 @@ export const useSpatialAudio = () => {
   const [audioBuffers, setAudioBuffers] = useState<Map<string, AudioBuffer>>(new Map());
   const soundNodes = useRef<Map<string, AudioBufferSourceNode>>(new Map());
   const panners = useRef<Map<string, PannerNode>>(new Map());
+  const ambianceNode = useRef<AudioBufferSourceNode | null>(null);
 
   const initializeAudioContext = async () => {
     if (!audioContext) {
@@ -37,8 +38,12 @@ export const useSpatialAudio = () => {
 
   const playAnimalSound = async (animal: Animal, loop: boolean = true) => {
     try {
+      console.log('🔊 Tentative de lecture du son:', animal.name, animal.soundFile);
       const ctx = await initializeAudioContext();
+      console.log('📱 AudioContext état:', ctx.state);
+      
       const buffer = await loadAudioBuffer(animal.soundFile);
+      console.log('🎵 Buffer audio chargé:', buffer.duration, 'secondes');
       
       stopAnimalSound(animal.id);
       
@@ -65,12 +70,14 @@ export const useSpatialAudio = () => {
       panner.connect(ctx.destination);
       
       source.start();
+      console.log('✅ Son démarré pour:', animal.name);
       
       soundNodes.current.set(animal.id, source);
       panners.current.set(animal.id, panner);
       
     } catch (error) {
-      console.error('Error playing spatial audio:', error);
+      console.error('❌ Erreur lecture audio:', error);
+      console.error('URL tentée:', animal.soundFile);
     }
   };
 
@@ -108,12 +115,52 @@ export const useSpatialAudio = () => {
     }
   };
 
+  const playAmbiance = async () => {
+    try {
+      console.log('🌲 Démarrage ambiance sonore');
+      const ctx = await initializeAudioContext();
+      const buffer = await loadAudioBuffer('/assets/sounds/night-forest-soundscape.mp3');
+      
+      if (ambianceNode.current) {
+        ambianceNode.current.stop();
+      }
+      
+      const source = ctx.createBufferSource();
+      const gainNode = ctx.createGain();
+      
+      source.buffer = buffer;
+      source.loop = true;
+      
+      // Volume ambiance plus faible pour ne pas couvrir les animaux
+      gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
+      
+      source.connect(gainNode);
+      gainNode.connect(ctx.destination);
+      
+      source.start();
+      ambianceNode.current = source;
+      
+      console.log('✅ Ambiance sonore démarrée');
+    } catch (error) {
+      console.error('❌ Erreur ambiance sonore:', error);
+    }
+  };
+
+  const stopAmbiance = () => {
+    if (ambianceNode.current) {
+      ambianceNode.current.stop();
+      ambianceNode.current = null;
+      console.log('🔇 Ambiance sonore arrêtée');
+    }
+  };
+
   const stopAllSounds = () => {
     soundNodes.current.forEach((source) => {
       source.stop();
     });
     soundNodes.current.clear();
     panners.current.clear();
+    stopAmbiance();
   };
 
   useEffect(() => {
@@ -128,6 +175,8 @@ export const useSpatialAudio = () => {
     stopAnimalSound,
     updateListenerOrientation,
     stopAllSounds,
+    playAmbiance,
+    stopAmbiance,
     isReady: audioContext !== null
   };
 };

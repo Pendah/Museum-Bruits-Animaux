@@ -1,35 +1,39 @@
-import { useRef, useEffect } from 'react';
-import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import { useRef, useEffect, useState, Suspense } from 'react';
+import { Canvas, useFrame, useThree, useLoader } from '@react-three/fiber';
 import { Sphere, OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
+import { TextureLoader } from 'three';
 import { useDeviceOrientation } from '../hooks/useDeviceOrientation';
 
 interface Scene360Props {
   textureUrl?: string;
   onDirectionChange?: (direction: THREE.Vector3) => void;
+  useGyroscope?: boolean;
 }
 
 function ForestEnvironment({ textureUrl }: { textureUrl?: string }) {
-  const meshRef = useRef<THREE.Mesh>(null);
-  
+  const texture = textureUrl ? useLoader(TextureLoader, textureUrl) : null;
+
   useEffect(() => {
-    if (textureUrl) {
-      const loader = new THREE.TextureLoader();
-      loader.load(textureUrl, (texture) => {
-        if (meshRef.current) {
-          (meshRef.current.material as THREE.MeshBasicMaterial).map = texture;
-        }
-      });
+    if (texture) {
+      console.log('Texture chargée avec useLoader');
+      // Configuration spécifique pour les textures 360°
+      texture.wrapS = THREE.RepeatWrapping;
+      texture.wrapT = THREE.ClampToEdgeWrapping;
+      texture.flipY = false;
+      texture.needsUpdate = true;
     }
-  }, [textureUrl]);
+  }, [texture]);
 
   return (
-    <Sphere ref={meshRef} args={[500, 60, 40]} scale={[-1, 1, 1]}>
+    <mesh>
+      <sphereGeometry args={[10, 32, 32]} />
       <meshBasicMaterial 
+        map={texture || undefined}
+        color={texture ? "#ffffff" : "#ff0000"}
         side={THREE.BackSide}
-        color={textureUrl ? 'white' : '#1a2f1a'}
       />
-    </Sphere>
+    </mesh>
   );
 }
 
@@ -72,7 +76,8 @@ function CameraController({
 
 export const Scene360: React.FC<Scene360Props> = ({ 
   textureUrl, 
-  onDirectionChange 
+  onDirectionChange,
+  useGyroscope = true
 }) => {
   const { orientation } = useDeviceOrientation();
 
@@ -80,24 +85,27 @@ export const Scene360: React.FC<Scene360Props> = ({
     <div style={{ width: '100vw', height: '100vh' }}>
       <Canvas
         camera={{
-          position: [0, 0, 0],
-          fov: 75,
+          position: [0, 0, 0.1],
+          fov: 90,
           near: 0.1,
           far: 1000
         }}
       >
-        <ambientLight intensity={0.6} />
-        <ForestEnvironment textureUrl={textureUrl} />
-        <CameraController 
-          orientation={orientation}
-          onDirectionChange={onDirectionChange}
-        />
-        <OrbitControls 
-          enabled={orientation.alpha === null}
-          enableZoom={false}
-          enablePan={false}
-          rotateSpeed={0.5}
-        />
+        <Suspense fallback={null}>
+          <ForestEnvironment textureUrl={textureUrl} />
+          {useGyroscope && (
+            <CameraController 
+              orientation={orientation}
+              onDirectionChange={onDirectionChange}
+            />
+          )}
+          <OrbitControls 
+            enabled={!useGyroscope || orientation.alpha === null}
+            enableZoom={false}
+            enablePan={false}
+            rotateSpeed={0.5}
+          />
+        </Suspense>
       </Canvas>
     </div>
   );
