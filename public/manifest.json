@@ -1,0 +1,26 @@
+{
+  "name": "Museum - Bruits Animaux",
+  "short_name": "Bruits Nuit",
+  "description": "Découvrez les bruits de la nuit - Une expérience immersive du Muséum de Toulouse",
+  "start_url": "/",
+  "display": "fullscreen",
+  "orientation": "any",
+  "theme_color": "#2d5a27",
+  "background_color": "#000000",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "vite.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["education", "entertainment"],
+  "lang": "fr-FR"
+}

@@ -1,0 +1,121 @@
+import { motion, AnimatePresence } from "framer-motion";
+import type { Animal } from "../types";
+
+interface GameUIProps {
+  isListening: boolean;
+  currentAnimal: Animal | null;
+  discoveredAnimals: string[];
+  onStartListening: () => void;
+  onShowAnimalInfo: (animal: Animal) => void;
+  showPermissionPrompt: boolean;
+  onRequestPermission: () => void;
+}
+
+export const GameUI: React.FC<GameUIProps> = ({
+  isListening,
+  currentAnimal,
+  discoveredAnimals,
+  onStartListening,
+  onShowAnimalInfo,
+  showPermissionPrompt,
+  onRequestPermission,
+}) => {
+  return (
+    <div className="game-ui">
+      <AnimatePresence>
+        {showPermissionPrompt && (
+          <motion.div
+            className="permission-modal"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <div className="modal-content">
+              <h2>Autorisation requise</h2>
+              <p>
+                Cette expérience nécessite l'accès aux capteurs de mouvement de
+                votre appareil pour fonctionner correctement.
+              </p>
+              <button onClick={onRequestPermission} className="permission-btn">
+                Autoriser
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <div className="ui-overlay">
+        <header className="app-header">
+          <h1>Bruits de la Nuit</h1>
+          <p>Écoutez et trouvez les animaux nocturnes</p>
+        </header>
+
+        <div className="progress-indicator">
+          <span>Animaux découverts: {discoveredAnimals.length}</span>
+        </div>
+
+        {!isListening ? (
+          <div className="start-screen">
+            <motion.button
+              className="start-btn"
+              onClick={onStartListening}
+              whileTap={{ scale: 0.95 }}
+              whileHover={{ scale: 1.05 }}
+            >
+              Commencer l'exploration
+            </motion.button>
+            <p className="instruction">
+              Utilisez vos écouteurs pour une meilleure expérience
+            </p>
+          </div>
+        ) : (
+          <div className="listening-ui">
+            {currentAnimal ? (
+              <motion.div
+                className="animal-found"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", stiffness: 300 }}
+              >
+                <h3>Animal trouvé !</h3>
+                <button
+                  onClick={() => onShowAnimalInfo(currentAnimal)}
+                  className="show-info-btn"
+                >
+                  Voir {currentAnimal.name}
+                </button>
+              </motion.div>
+            ) : (
+              <motion.div
+                className="listening-indicator"
+                animate={{ scale: [1, 1.1, 1] }}
+                transition={{ repeat: Infinity, duration: 2 }}
+              >
+                <div className="sound-waves">
+                  <div className="wave"></div>
+                  <div className="wave"></div>
+                  <div className="wave"></div>
+                </div>
+                <p>Écoutez attentivement et tournez-vous vers le son...</p>
+              </motion.div>
+            )}
+          </div>
+        )}
+
+        <div className="discovered-animals">
+          {discoveredAnimals.map((animalId, index) => (
+            <motion.div
+              key={animalId}
+              className="discovered-animal-badge"
+              initial={{ x: -100, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ delay: index * 0.1 }}
+            >
+              🦉
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
