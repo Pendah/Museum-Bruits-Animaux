@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import type { Animal } from "../types";
-import { NavigationSwitch } from "./NavigationSwitch";
+import NavigationSwitch from "./NavigationSwitch";
 
 interface GameUIProps {
   isListening: boolean;

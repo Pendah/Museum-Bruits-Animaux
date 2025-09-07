@@ -1,6 +1,6 @@
-import { useRef, useEffect, useState, Suspense } from 'react';
+import { useRef, useEffect, Suspense } from 'react';
 import { Canvas, useFrame, useThree, useLoader } from '@react-three/fiber';
-import { Sphere, OrbitControls } from '@react-three/drei';
+import { OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
 import { TextureLoader } from 'three';
 import { useDeviceOrientation } from '../hooks/useDeviceOrientation';

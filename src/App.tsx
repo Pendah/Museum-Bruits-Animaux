@@ -61,7 +61,7 @@ function App() {
       setCurrentlyPlayingAnimal(randomAnimal);
       await playAnimalSound(randomAnimal);
     }
-  }, [gameState.discoveredAnimals, initializeAudioContext, playAnimalSound, permission, requestPermission]);
+  }, [gameState.discoveredAnimals, initializeAudioContext, playAnimalSound, permission, requestPermission, playAmbiance]);
 
   const handleDirectionChange = useCallback((direction: THREE.Vector3) => {
     setPlayerDirection(direction);
