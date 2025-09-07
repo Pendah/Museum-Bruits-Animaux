@@ -29,7 +29,6 @@ function App() {
     playAnimalSound,
     stopAllSounds,
     updateListenerOrientation,
-    isReady: audioReady,
   } = useSpatialAudio();
 
   const startListening = useCallback(async () => {

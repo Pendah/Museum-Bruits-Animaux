@@ -109,7 +109,7 @@ export const useSpatialAudio = () => {
   };
 
   const stopAllSounds = () => {
-    soundNodes.current.forEach((source, id) => {
+    soundNodes.current.forEach((source) => {
       source.stop();
     });
     soundNodes.current.clear();
