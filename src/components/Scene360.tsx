@@ -20,7 +20,6 @@ interface Scene360Props {
   useGyroscope?: boolean;
   animals?: Animal[];
   currentlyPlayingAnimal?: Animal | null;
-  onAnimalClick?: (animal: Animal) => void;
   onDetectionUpdate?: (state: DetectionState | null) => void;
   updateVolumeByAngle?: (animalId: string, angleDegrees: number) => void;
   gameState?: {
@@ -212,13 +211,11 @@ function SoundWave({
   );
 }
 
-// Marqueur 2D cliquable avec animation d'ondes
-function ClickableAnimalMarker({
+// Marqueur 2D avec animation d'ondes (non cliquable)
+function AnimalMarker({
   animal,
-  onAnimalClick,
 }: {
   animal: Animal;
-  onAnimalClick: (animal: Animal) => void;
 }) {
   const { camera } = useThree();
   const groupRef = useRef<THREE.Group>(null);
@@ -238,24 +235,12 @@ function ClickableAnimalMarker({
     }
   });
 
-  const handleClick = (e: any) => {
-    e.stopPropagation();
-    console.log(`🎯 Clic sur ${animal.name}`);
-    onAnimalClick(animal);
-  };
-
   return (
     <group
       ref={groupRef}
       position={[normalizedPos.x, normalizedPos.y, normalizedPos.z]}
     >
-      {/* Zone de clic invisible mais large */}
-      <mesh onClick={handleClick}>
-        <planeGeometry args={[3, 3]} />
-        <meshBasicMaterial color="#000000" transparent opacity={0} />
-      </mesh>
-
-      {/* Centre : petit cercle noir */}
+      {/* Centre : petit cercle cyan */}
       <mesh>
         <circleGeometry args={[0.2, 16]} />
         <meshBasicMaterial color="#00ffff" transparent={true} opacity={0.8} />
@@ -270,11 +255,9 @@ function ClickableAnimalMarker({
 function AnimalMarkers({
   animals,
   currentlyPlayingAnimal,
-  onAnimalClick,
 }: {
   animals: Animal[];
   currentlyPlayingAnimal: Animal | null;
-  onAnimalClick: (animal: Animal) => void;
 }) {
   return (
     <>
@@ -284,10 +267,9 @@ function AnimalMarkers({
         if (!isPlaying) return null; // Afficher seulement l'animal actuel
 
         return (
-          <ClickableAnimalMarker
+          <AnimalMarker
             key={animal.id}
             animal={animal}
-            onAnimalClick={onAnimalClick}
           />
         );
       })}
@@ -415,7 +397,6 @@ export const Scene360: React.FC<Scene360Props> = ({
   useGyroscope = true,
   animals = [],
   currentlyPlayingAnimal = null,
-  onAnimalClick,
   onDetectionUpdate,
   updateVolumeByAngle,
   gameState,
@@ -423,12 +404,6 @@ export const Scene360: React.FC<Scene360Props> = ({
 }) => {
   const { orientation } = useDeviceOrientation();
   const recalibrateRef = useRef<(() => void) | null>(null);
-
-  const handleAnimalClick = (animal: Animal) => {
-    if (onAnimalClick) {
-      onAnimalClick(animal);
-    }
-  };
 
   const handleRecalibrate = () => {
     if (recalibrateRef.current) {
@@ -453,11 +428,10 @@ export const Scene360: React.FC<Scene360Props> = ({
         <Suspense fallback={null}>
           <ForestEnvironment textureUrl={textureUrl} />
 
-          {/* Marqueurs des animaux cliquables */}
+          {/* Marqueurs des animaux (indicateurs visuels) */}
           <AnimalMarkers
             animals={animals}
             currentlyPlayingAnimal={currentlyPlayingAnimal}
-            onAnimalClick={handleAnimalClick}
           />
 
           {useGyroscope && (

@@ -107,13 +107,23 @@ function App() {
   );
 
   const closeModal = useCallback(async () => {
+    // Vérifier si c'était le dernier animal avant de fermer la modal
+    const wasLastAnimal = gameState.discoveredAnimals.length === animals.length;
+
     setGameState((prev) => ({
       ...prev,
       showVideoModal: false,
       currentAnimal: null,
     }));
 
-    // Passer au prochain animal s'il y en a
+    // Si c'était le dernier animal, on s'arrête là pour afficher les félicitations
+    if (wasLastAnimal) {
+      setCurrentlyPlayingAnimal(null);
+      stopAllSounds();
+      return;
+    }
+
+    // Sinon, passer au prochain animal
     const undiscoveredAnimals = animals.filter(
       (animal) => !gameState.discoveredAnimals.includes(animal.id)
     );
@@ -125,12 +135,23 @@ function App() {
         ];
       setCurrentlyPlayingAnimal(randomAnimal);
       await playAnimalSound(randomAnimal);
-    } else {
-      // Tous les animaux découverts !
-      setCurrentlyPlayingAnimal(null);
-      setGameState((prev) => ({ ...prev, isListening: false }));
     }
-  }, [gameState.discoveredAnimals, playAnimalSound]);
+  }, [gameState.discoveredAnimals, playAnimalSound, stopAllSounds]);
+
+  const restartGame = useCallback(async () => {
+    // Reset de l'état du jeu
+    setGameState({
+      currentAnimal: null,
+      discoveredAnimals: [],
+      isListening: false,
+      showVideoModal: false,
+    });
+    setCurrentlyPlayingAnimal(null);
+    setDetectionState(null);
+    stopAllSounds();
+    
+    console.log('🔄 Jeu redémarré');
+  }, [stopAllSounds]);
 
 
   // Nettoyage à la fermeture
@@ -147,7 +168,6 @@ function App() {
         useGyroscope={useGyroscope}
         animals={animals}
         currentlyPlayingAnimal={currentlyPlayingAnimal}
-        onAnimalClick={showAnimalInfo}
         onDetectionUpdate={handleDetectionUpdate}
         updateVolumeByAngle={updateVolumeByAngle}
         gameState={gameState}
@@ -167,6 +187,9 @@ function App() {
         useGyroscope={useGyroscope}
         onToggleNavigation={setUseGyroscope}
         gyroscopeAvailable={permission === "granted"}
+        totalAnimals={animals.length}
+        onRestartGame={restartGame}
+        showVideoModal={gameState.showVideoModal}
       />
       <AnimalModal
         animal={gameState.currentAnimal}

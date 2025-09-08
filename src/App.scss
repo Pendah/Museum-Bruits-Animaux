@@ -175,7 +175,8 @@ body {
       pointer-events: none;
 
       .listening-indicator,
-      .animal-found {
+      .animal-found,
+      .game-completed {
         pointer-events: auto;
 
         * {
@@ -296,6 +297,47 @@ body {
       font-weight: bold;
       cursor: pointer;
       transition: $transition;
+
+      &:hover {
+        background: lighten($accent-color, 10%);
+        transform: scale(1.05);
+      }
+    }
+  }
+
+  .game-completed {
+    background: $background-dark;
+    padding: 20px;
+    border-radius: $border-radius;
+    text-align: center;
+    border: 2px solid $accent-color;
+
+    h3 {
+      margin-bottom: 15px;
+      color: $accent-color;
+      font-size: 1.5rem;
+    }
+
+    p {
+      margin-bottom: 15px;
+      
+      &.stats {
+        font-weight: bold;
+        color: $accent-color;
+        font-size: 1.1rem;
+      }
+    }
+
+    .restart-btn {
+      background: $accent-color;
+      color: $text-dark;
+      border: none;
+      padding: 12px 25px;
+      border-radius: $border-radius;
+      font-weight: bold;
+      cursor: pointer;
+      transition: $transition;
+      margin-top: 10px;
 
       &:hover {
         background: lighten($accent-color, 10%);

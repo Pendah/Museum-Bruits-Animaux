@@ -24,6 +24,9 @@ interface GameUIProps {
   useGyroscope: boolean;
   onToggleNavigation: (useGyroscope: boolean) => void;
   gyroscopeAvailable: boolean;
+  totalAnimals: number;
+  onRestartGame: () => void;
+  showVideoModal: boolean;
 }
 
 export const GameUI: React.FC<GameUIProps> = ({
@@ -39,7 +42,14 @@ export const GameUI: React.FC<GameUIProps> = ({
   useGyroscope,
   onToggleNavigation,
   gyroscopeAvailable,
+  totalAnimals,
+  onRestartGame,
+  showVideoModal,
 }) => {
+  const isGameCompleted =
+    discoveredAnimals.length === totalAnimals &&
+    !showVideoModal &&
+    !currentAnimal;
   return (
     <div className="game-ui">
       <AnimatePresence>
@@ -80,10 +90,6 @@ export const GameUI: React.FC<GameUIProps> = ({
           </div>
         </header>
 
-        <div className="progress-indicator">
-          <span>Animaux découverts: {discoveredAnimals.length}</span>
-        </div>
-
         <NavigationSwitch
           useGyroscope={useGyroscope}
           onToggle={onToggleNavigation}
@@ -100,6 +106,24 @@ export const GameUI: React.FC<GameUIProps> = ({
             >
               Commencer l'exploration
             </motion.button>
+          </div>
+        ) : isGameCompleted ? (
+          <div className="listening-ui">
+            <motion.div
+              className="game-completed"
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
+              <h3>🎉 Félicitations !</h3>
+              <p>Tous les animaux découverts !</p>
+              <p className="stats">
+                {totalAnimals}/{totalAnimals}
+              </p>
+              <button onClick={onRestartGame} className="restart-btn">
+                Recommencer l'exploration
+              </button>
+            </motion.div>
           </div>
         ) : (
           <div className="listening-ui">
