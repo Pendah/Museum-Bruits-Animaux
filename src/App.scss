@@ -8,6 +8,98 @@ $text-dark: #333333;
 $border-radius: 12px;
 $transition: all 0.3s ease;
 
+// Styles pour le système d'indices par paliers
+.hint-indicator {
+  position: fixed;
+  bottom: 150px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  text-align: center;
+  
+  .hint-message {
+    background: rgba(0, 0, 0, 0.8);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: $border-radius;
+    padding: 12px 20px;
+    color: $text-light;
+    font-size: 16px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    
+    span {
+      font-size: 14px;
+    }
+    
+    // Animation de pulsation pour attirer l'attention
+    animation: hintPulse 2s ease-in-out;
+  }
+}
+
+@keyframes hintPulse {
+  0% { 
+    transform: scale(1);
+    box-shadow: 0 4px 20px rgba(255, 255, 255, 0.1);
+  }
+  50% { 
+    transform: scale(1.05);
+    box-shadow: 0 8px 30px rgba(255, 255, 255, 0.2);
+  }
+  100% { 
+    transform: scale(1);
+    box-shadow: 0 4px 20px rgba(255, 255, 255, 0.1);
+  }
+}
+
+.click-zone {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 200;
+  cursor: pointer;
+  
+  .click-target {
+    background: linear-gradient(135deg, #4CAF50, #45a049);
+    border: 3px solid white;
+    border-radius: 50%;
+    width: 120px;
+    height: 120px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    animation: pulse 2s infinite;
+    
+    .animal-icon {
+      font-size: 32px;
+      margin-bottom: 5px;
+    }
+    
+    p {
+      margin: 0;
+      color: white;
+      font-weight: bold;
+      text-align: center;
+      font-size: 12px;
+      
+      &.animal-name {
+        font-size: 14px;
+        margin-top: 5px;
+      }
+    }
+  }
+}
+
+@keyframes pulse {
+  0% { box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); }
+  50% { box-shadow: 0 8px 32px rgba(76, 175, 80, 0.6); }
+  100% { box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); }
+}
+
 // Reset et base
 * {
   margin: 0;

@@ -7,6 +7,15 @@ import { useDeviceOrientation } from "./hooks/useDeviceOrientation";
 import { useSpatialAudio } from "./hooks/useSpatialAudio";
 import { animals } from "./data/animals";
 import type { Animal, GameState } from "./types";
+
+interface DetectionState {
+  distance: number;
+  angle: number;
+  isNearby: boolean;
+  canClick: boolean;
+  hintLevel: 'far' | 'medium' | 'close' | 'veryClose';
+  showHint: boolean;
+}
 import "./App.scss";
 
 function App() {
@@ -23,14 +32,17 @@ function App() {
     new THREE.Vector3(0, 0, -1)
   );
   const [useGyroscope, setUseGyroscope] = useState(true);
+  const [detectionState, setDetectionState] = useState<DetectionState | null>(null);
+  const [lastHintTime, setLastHintTime] = useState<number>(0);
+  const [currentHintLevel, setCurrentHintLevel] = useState<string>('');
 
   const { orientation, permission, requestPermission } = useDeviceOrientation();
   const {
     initializeAudioContext,
     playAnimalSound,
     stopAllSounds,
-    updateListenerOrientation,
     playAmbiance,
+    updateVolumeByAngle,
   } = useSpatialAudio();
 
   const startListening = useCallback(async () => {
@@ -68,7 +80,10 @@ function App() {
   }, []);
 
   const checkAnimalDetection = useCallback(() => {
-    if (!currentlyPlayingAnimal || !gameState.isListening) return;
+    if (!currentlyPlayingAnimal || !gameState.isListening) {
+      setDetectionState(null);
+      return;
+    }
 
     const animalPosition = new THREE.Vector3(
       currentlyPlayingAnimal.position.x,
@@ -76,24 +91,86 @@ function App() {
       currentlyPlayingAnimal.position.z
     );
 
+    // Calculer l'angle entre direction caméra et position animal
     const normalizedAnimalDir = animalPosition.clone().normalize();
     const normalizedPlayerDir = playerDirection.clone().normalize();
     const angle = normalizedPlayerDir.angleTo(normalizedAnimalDir);
+    const angleDegrees = (angle * 180) / Math.PI;
+    
+    // Debug simple de l'angle (sera affiché à chaque détection)
+    console.log(`🎯 ${currentlyPlayingAnimal.name} | Angle: ${angleDegrees.toFixed(1)}°`);
 
-    // Si l'angle est suffisamment petit (l'utilisateur pointe vers l'animal)
-    if (angle < (currentlyPlayingAnimal.detectionRadius * Math.PI) / 180) {
-      if (!gameState.discoveredAnimals.includes(currentlyPlayingAnimal.id)) {
-        setGameState((prev) => ({
-          ...prev,
-          currentAnimal: currentlyPlayingAnimal,
-          discoveredAnimals: [
-            ...prev.discoveredAnimals,
-            currentlyPlayingAnimal.id,
-          ],
-        }));
+    // Seuils basés sur l'angle (distance angulaire)
+    const ANGLE_THRESHOLD = currentlyPlayingAnimal.detectionRadius;
+
+    const isInDirection = angleDegrees <= ANGLE_THRESHOLD;
+    const isNearby = angleDegrees <= 30; // Proche si dans un cône de 30°
+    const canClick = angleDegrees <= 15; // Zone de clic si dans un cône de 15°
+
+    // Déterminer le niveau d'indice par paliers basé sur l'angle
+    let hintLevel: 'far' | 'medium' | 'close' | 'veryClose' = 'far';
+    if (angleDegrees <= 15) hintLevel = 'veryClose';      // Regarde quasi direct
+    else if (angleDegrees <= 30) hintLevel = 'close';     // Dans le bon secteur  
+    else if (angleDegrees <= 60) hintLevel = 'medium';    // Se rapproche de la direction
+
+    // Afficher indice seulement si changement de palier
+    const now = Date.now();
+    const HINT_DISPLAY_DURATION = 2000; // 2 secondes d'affichage
+    const levelChanged = hintLevel !== currentHintLevel;
+    
+    // Déclencher nouveau hint seulement si niveau change
+    if (levelChanged && hintLevel !== 'far') {
+      setLastHintTime(now);
+      setCurrentHintLevel(hintLevel);
+      
+      // Feedback haptique sur mobile
+      if ('vibrate' in navigator) {
+        const vibrationPatterns: Record<string, number[]> = {
+          'medium': [100],
+          'close': [100, 50, 100],
+          'veryClose': [200, 100, 200]
+        };
+        
+        const pattern = vibrationPatterns[hintLevel];
+        if (pattern) {
+          navigator.vibrate(pattern);
+        }
       }
     }
-  }, [currentlyPlayingAnimal, playerDirection, gameState]);
+
+    // Afficher hint seulement pendant une durée limitée
+    const shouldShowHint = levelChanged && hintLevel !== 'far';
+    const hintStillVisible = (now - lastHintTime) < HINT_DISPLAY_DURATION && currentHintLevel !== '';
+
+    // Mettre à jour l'état de détection
+    const newDetectionState: DetectionState = {
+      distance: angleDegrees, // Distance angulaire
+      angle: angleDegrees,
+      isNearby,
+      canClick,
+      hintLevel,
+      showHint: shouldShowHint || hintStillVisible
+    };
+    setDetectionState(newDetectionState);
+
+    // Mettre à jour le volume en temps réel selon l'angle
+    if (currentlyPlayingAnimal) {
+      updateVolumeByAngle(currentlyPlayingAnimal.id, angleDegrees);
+    }
+
+    // Auto-découverte quand on est très proche ET dans la bonne direction
+    if (canClick && !gameState.discoveredAnimals.includes(currentlyPlayingAnimal.id)) {
+      console.log('🎯 Animal découvert automatiquement !', currentlyPlayingAnimal.name);
+      setGameState((prev) => ({
+        ...prev,
+        currentAnimal: currentlyPlayingAnimal,
+        discoveredAnimals: [
+          ...prev.discoveredAnimals,
+          currentlyPlayingAnimal.id,
+        ],
+      }));
+    }
+  }, [currentlyPlayingAnimal, playerDirection, gameState, updateVolumeByAngle, currentHintLevel, lastHintTime]);
 
   const showAnimalInfo = useCallback(
     (animal: Animal) => {
@@ -133,20 +210,6 @@ function App() {
     }
   }, [gameState.discoveredAnimals, playAnimalSound]);
 
-  // Mise à jour de l'orientation de l'écouteur
-  useEffect(() => {
-    if (
-      orientation.alpha !== null &&
-      orientation.beta !== null &&
-      orientation.gamma !== null
-    ) {
-      updateListenerOrientation(
-        orientation.alpha,
-        orientation.beta,
-        orientation.gamma
-      );
-    }
-  }, [orientation, updateListenerOrientation]);
 
   // Vérification de la détection d'animal
   useEffect(() => {
@@ -167,19 +230,24 @@ function App() {
         textureUrl="/assets/textures/forest-night-360.jpg"
         onDirectionChange={handleDirectionChange}
         useGyroscope={useGyroscope}
+        animals={animals}
+        currentlyPlayingAnimal={currentlyPlayingAnimal}
+        onAnimalClick={showAnimalInfo}
       />
 
       <GameUI
         isListening={gameState.isListening}
         currentAnimal={gameState.currentAnimal}
         discoveredAnimals={gameState.discoveredAnimals}
+        detectionState={detectionState}
+        currentlyPlayingAnimal={currentlyPlayingAnimal}
         onStartListening={startListening}
         onShowAnimalInfo={showAnimalInfo}
         showPermissionPrompt={false}
         onRequestPermission={requestPermission}
         useGyroscope={useGyroscope}
         onToggleNavigation={setUseGyroscope}
-        gyroscopeAvailable={permission !== 'denied'}
+        gyroscopeAvailable={permission === 'granted'}
       />
 
       <AnimalModal

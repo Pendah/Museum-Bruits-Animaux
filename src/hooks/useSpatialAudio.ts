@@ -1,24 +1,47 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import type { Animal } from '../types';
 
 export const useSpatialAudio = () => {
   const [audioContext, setAudioContext] = useState<AudioContext | null>(null);
   const [audioBuffers, setAudioBuffers] = useState<Map<string, AudioBuffer>>(new Map());
   const soundNodes = useRef<Map<string, AudioBufferSourceNode>>(new Map());
-  const panners = useRef<Map<string, PannerNode>>(new Map());
+  const gainNodes = useRef<Map<string, GainNode>>(new Map());
   const ambianceNode = useRef<AudioBufferSourceNode | null>(null);
 
   const initializeAudioContext = async () => {
     if (!audioContext) {
-      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const AudioContextClass = window.AudioContext || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+      if (!AudioContextClass) {
+        throw new Error('AudioContext not supported');
+      }
+      const ctx = new AudioContextClass();
       setAudioContext(ctx);
       
+      // S'assurer que l'AudioContext est actif après interaction utilisateur
       if (ctx.state === 'suspended') {
-        await ctx.resume();
+        try {
+          await ctx.resume();
+          console.log('✅ AudioContext resumed successfully');
+        } catch (error) {
+          console.error('❌ Failed to resume AudioContext:', error);
+          throw error;
+        }
       }
       
       return ctx;
     }
+    
+    // Si AudioContext existe mais est suspendu, le réactiver
+    if (audioContext.state === 'suspended') {
+      try {
+        await audioContext.resume();
+        console.log('✅ Existing AudioContext resumed');
+      } catch (error) {
+        console.error('❌ Failed to resume existing AudioContext:', error);
+        throw error;
+      }
+    }
+    
     return audioContext;
   };
 
@@ -42,42 +65,58 @@ export const useSpatialAudio = () => {
       const ctx = await initializeAudioContext();
       console.log('📱 AudioContext état:', ctx.state);
       
+      // Vérifier que l'AudioContext est vraiment actif
+      if (ctx.state !== 'running') {
+        console.warn('⚠️ AudioContext not running, état:', ctx.state);
+        return false;
+      }
+      
       const buffer = await loadAudioBuffer(animal.soundFile);
       console.log('🎵 Buffer audio chargé:', buffer.duration, 'secondes');
       
       stopAnimalSound(animal.id);
       
       const source = ctx.createBufferSource();
-      const panner = ctx.createPanner();
+      const gainNode = ctx.createGain();
       
       source.buffer = buffer;
       source.loop = loop;
       
-      panner.panningModel = 'HRTF';
-      panner.distanceModel = 'inverse';
-      panner.refDistance = 1;
-      panner.maxDistance = 10000;
-      panner.rolloffFactor = 1;
-      panner.coneInnerAngle = 360;
-      panner.coneOuterAngle = 0;
-      panner.coneOuterGain = 0;
+      // Volume initial faible (sera ajusté par angle)
+      gainNode.gain.setValueAtTime(0.1, ctx.currentTime);
       
-      panner.positionX.setValueAtTime(animal.position.x, ctx.currentTime);
-      panner.positionY.setValueAtTime(animal.position.y, ctx.currentTime);
-      panner.positionZ.setValueAtTime(animal.position.z, ctx.currentTime);
+      console.log(`🎯 Animal configuré: ${animal.name} à [${animal.position.x}, ${animal.position.y}, ${animal.position.z}]`);
       
-      source.connect(panner);
-      panner.connect(ctx.destination);
+      source.connect(gainNode);
+      gainNode.connect(ctx.destination);
+      
+      // Gestion des événements de lecture
+      source.onended = () => {
+        console.log('🎵 Son terminé:', animal.name);
+      };
       
       source.start();
       console.log('✅ Son démarré pour:', animal.name);
       
       soundNodes.current.set(animal.id, source);
-      panners.current.set(animal.id, panner);
+      gainNodes.current.set(animal.id, gainNode);
+      
+      return true;
       
     } catch (error) {
       console.error('❌ Erreur lecture audio:', error);
       console.error('URL tentée:', animal.soundFile);
+      
+      // Informations de debug utiles
+      if (error instanceof Error) {
+        if (error.name === 'NotAllowedError') {
+          console.error('🚫 Autoplay bloqué par le navigateur');
+        } else if (error.name === 'NotSupportedError') {
+          console.error('🎵 Format audio non supporté');
+        }
+      }
+      
+      return false;
     }
   };
 
@@ -86,34 +125,10 @@ export const useSpatialAudio = () => {
     if (source) {
       source.stop();
       soundNodes.current.delete(animalId);
-      panners.current.delete(animalId);
+      gainNodes.current.delete(animalId);
     }
   };
 
-  const updateListenerOrientation = (alpha: number, beta: number, gamma: number) => {
-    if (!audioContext?.listener) return;
-    
-    const alphaRad = alpha * Math.PI / 180;
-    const betaRad = beta * Math.PI / 180;
-    const gammaRad = gamma * Math.PI / 180;
-    
-    const forwardX = Math.sin(alphaRad) * Math.cos(betaRad);
-    const forwardY = -Math.sin(betaRad);
-    const forwardZ = -Math.cos(alphaRad) * Math.cos(betaRad);
-    
-    const upX = Math.sin(alphaRad) * Math.sin(betaRad) * Math.sin(gammaRad) - Math.cos(alphaRad) * Math.cos(gammaRad);
-    const upY = Math.cos(betaRad) * Math.sin(gammaRad);
-    const upZ = -Math.cos(alphaRad) * Math.sin(betaRad) * Math.sin(gammaRad) - Math.sin(alphaRad) * Math.cos(gammaRad);
-    
-    if (audioContext.listener.forwardX) {
-      audioContext.listener.forwardX.setValueAtTime(forwardX, audioContext.currentTime);
-      audioContext.listener.forwardY.setValueAtTime(forwardY, audioContext.currentTime);
-      audioContext.listener.forwardZ.setValueAtTime(forwardZ, audioContext.currentTime);
-      audioContext.listener.upX.setValueAtTime(upX, audioContext.currentTime);
-      audioContext.listener.upY.setValueAtTime(upY, audioContext.currentTime);
-      audioContext.listener.upZ.setValueAtTime(upZ, audioContext.currentTime);
-    }
-  };
 
   const playAmbiance = async () => {
     try {
@@ -154,29 +169,49 @@ export const useSpatialAudio = () => {
     }
   };
 
-  const stopAllSounds = () => {
+  const stopAllSounds = useCallback(() => {
     soundNodes.current.forEach((source) => {
       source.stop();
     });
     soundNodes.current.clear();
-    panners.current.clear();
+    gainNodes.current.clear();
     stopAmbiance();
-  };
+  }, []);
 
   useEffect(() => {
     return () => {
       stopAllSounds();
     };
-  }, []);
+  }, [stopAllSounds]);
+
+
+  const updateVolumeByAngle = useCallback((animalId: string, angularDistance: number) => {
+    const gainNode = gainNodes.current.get(animalId);
+    if (!gainNode || !audioContext) return;
+
+    // Calcul du volume basé uniquement sur l'angle (0° = fort, 180° = faible)
+    const maxVolume = 0.8; // Volume max quand on regarde direct (0°)
+    const minVolume = 0.05; // Volume min plus audible
+    const maxAngle = 120; // Angle plus permissif
+    
+    // Plus l'angle est petit, plus le volume est fort
+    const volumeRatio = Math.max(0, 1 - (angularDistance / maxAngle));
+    const volume = minVolume + (maxVolume - minVolume) * volumeRatio; // Courbe linéaire pour plus de contrôle
+
+    gainNode.gain.setValueAtTime(volume, audioContext.currentTime);
+    
+    // Debug du volume
+    console.log(`🔊 Volume: ${volume.toFixed(2)} | Angle: ${angularDistance.toFixed(1)}° | Animal: ${animalId}`);
+  }, [audioContext]);
 
   return {
     initializeAudioContext,
     playAnimalSound,
     stopAnimalSound,
-    updateListenerOrientation,
     stopAllSounds,
     playAmbiance,
     stopAmbiance,
+    updateVolumeByAngle,
     isReady: audioContext !== null
   };
 };

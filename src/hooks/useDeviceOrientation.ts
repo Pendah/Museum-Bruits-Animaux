@@ -11,20 +11,58 @@ export const useDeviceOrientation = () => {
     "granted" | "denied" | "default"
   >("default");
 
+  // Vérifier la disponibilité du gyroscope au montage
+  useEffect(() => {
+    const checkInitialSupport = () => {
+      if (typeof DeviceOrientationEvent === 'undefined') {
+        setPermission("denied");
+        return;
+      }
+      
+      // Pour les navigateurs sans requestPermission, considérer comme disponible
+      const DeviceOrientationEventTyped = DeviceOrientationEvent as unknown as {
+        requestPermission?: () => Promise<PermissionState>;
+      };
+      
+      if (typeof DeviceOrientationEventTyped.requestPermission !== "function") {
+        setPermission("granted");
+      }
+    };
+    
+    checkInitialSupport();
+  }, []);
+
   const requestPermission = async () => {
-    if (typeof (DeviceOrientationEvent as any).requestPermission === "function") {
+    // iOS 13+ nécessite une demande explicite de permission
+    const DeviceOrientationEventTyped = DeviceOrientationEvent as unknown as {
+      requestPermission?: () => Promise<PermissionState>;
+    };
+    
+    if (typeof DeviceOrientationEventTyped.requestPermission === "function") {
       try {
-        const response = await (DeviceOrientationEvent as any).requestPermission();
-        setPermission(response);
+        console.log('📱 Demande de permission DeviceOrientation...');
+        const response = await DeviceOrientationEventTyped.requestPermission();
+        console.log('📱 Réponse permission:', response);
+        setPermission(response as "granted" | "denied");
         return response === "granted";
       } catch (error) {
-        console.error("Error requesting device orientation permission:", error);
+        console.error("❌ Erreur demande permission orientation:", error);
         setPermission("denied");
         return false;
       }
     } else {
-      setPermission("granted");
-      return true;
+      // Pour les autres navigateurs/appareils, tester si l'événement est disponible
+      console.log('📱 Pas de requestPermission, vérification support...');
+      
+      // Tester si DeviceOrientationEvent est supporté
+      if (typeof DeviceOrientationEvent !== 'undefined') {
+        setPermission("granted");
+        return true;
+      } else {
+        console.warn('⚠️ DeviceOrientationEvent non supporté');
+        setPermission("denied");
+        return false;
+      }
     }
   };
 
