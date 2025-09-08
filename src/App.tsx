@@ -100,8 +100,6 @@ function App() {
     // Debug simple de l'angle (sera affiché à chaque détection)
     console.log(`🎯 ${currentlyPlayingAnimal.name} | Angle: ${angleDegrees.toFixed(1)}°`);
 
-    // Seuils basés sur l'angle (distance angulaire)
-    const ANGLE_THRESHOLD = currentlyPlayingAnimal.detectionRadius;
 
     const isNearby = angleDegrees <= 30; // Proche si dans un cône de 30°
     const canClick = angleDegrees <= 15; // Zone de clic si dans un cône de 15°
