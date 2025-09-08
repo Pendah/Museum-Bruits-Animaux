@@ -43,11 +43,7 @@ export const useDeviceOrientation = () => {
       }
       
       // Pour les navigateurs sans requestPermission, considérer comme disponible
-      const DeviceOrientationEventTyped = DeviceOrientationEvent as unknown as {
-        requestPermission?: () => Promise<PermissionState>;
-      };
-      
-      if (typeof DeviceOrientationEventTyped.requestPermission !== "function") {
+      if (typeof (DeviceOrientationEvent as any).requestPermission !== "function") {
         console.log('✅ Gyroscope disponible (pas de requestPermission)');
         setPermission("granted");
       } else {
@@ -60,35 +56,30 @@ export const useDeviceOrientation = () => {
 
   const requestPermission = async () => {
     console.log('🚀 Demande de permission gyroscope...');
+    console.log('🌐 User Agent:', navigator.userAgent);
+    console.log('🔧 DeviceOrientationEvent:', typeof DeviceOrientationEvent);
     
     // Vérification préalable HTTPS pour iOS
     if (isIOS() && !isHTTPS()) {
       console.error('❌ HTTPS requis pour gyroscope sur iOS 13+');
+      console.error('🔗 URL actuelle:', window.location.href);
       setPermission("denied");
       return false;
     }
 
     // iOS 13+ nécessite une demande explicite de permission
-    const DeviceOrientationEventTyped = DeviceOrientationEvent as unknown as {
-      requestPermission?: () => Promise<PermissionState>;
-    };
-    
-    const DeviceMotionEventTyped = (window as any).DeviceMotionEvent as {
-      requestPermission?: () => Promise<PermissionState>;
-    };
-    
-    if (typeof DeviceOrientationEventTyped.requestPermission === "function") {
+    if (typeof (DeviceOrientationEvent as any).requestPermission === "function") {
       try {
-        console.log('📱 iOS Safari - Demande permission DeviceOrientation...');
+        console.log('📱 iOS Safari détecté - Demande permission DeviceOrientation...');
         
-        // Sur iOS, on a besoin des deux permissions : DeviceOrientation ET DeviceMotion
-        const orientationResponse = await DeviceOrientationEventTyped.requestPermission();
+        // IMPORTANT: DeviceOrientationEvent.requestPermission() doit être appelé directement
+        const orientationResponse = await (DeviceOrientationEvent as any).requestPermission();
         console.log('📋 Permission DeviceOrientation:', orientationResponse);
         
-        // Demander aussi DeviceMotion si disponible (utile pour certains capteurs)
-        if (typeof DeviceMotionEventTyped?.requestPermission === "function") {
+        // Demander aussi DeviceMotion si disponible
+        if (typeof (DeviceMotionEvent as any).requestPermission === "function") {
           console.log('📱 Demande permission DeviceMotion...');
-          const motionResponse = await DeviceMotionEventTyped.requestPermission();
+          const motionResponse = await (DeviceMotionEvent as any).requestPermission();
           console.log('📋 Permission DeviceMotion:', motionResponse);
         }
         
