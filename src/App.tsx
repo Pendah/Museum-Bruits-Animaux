@@ -28,7 +28,7 @@ function App() {
 
   const [currentlyPlayingAnimal, setCurrentlyPlayingAnimal] =
     useState<Animal | null>(null);
-  const [useGyroscope, setUseGyroscope] = useState(true);
+  const [useGyroscope, setUseGyroscope] = useState(false);
   const [detectionState, setDetectionState] = useState<DetectionState | null>(
     null
   );

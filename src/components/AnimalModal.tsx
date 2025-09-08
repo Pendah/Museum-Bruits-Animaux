@@ -33,9 +33,35 @@ const VideoPlayer: React.FC<{ videoSrc: string }> = ({ videoSrc }) => {
     setIsFullscreen(!!document.fullscreenElement);
   };
 
+  const handleOrientationChange = () => {
+    // Force un recalcul des dimensions après changement d'orientation
+    if (videoRef.current && document.fullscreenElement) {
+      setTimeout(() => {
+        const video = videoRef.current;
+        if (video) {
+          video.style.width = '100vw';
+          video.style.height = '100vh';
+        }
+      }, 100);
+    }
+  };
+
   useEffect(() => {
     document.addEventListener('fullscreenchange', handleFullscreenChange);
-    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+    
+    // Écouter les changements d'orientation
+    window.addEventListener('orientationchange', handleOrientationChange);
+    window.addEventListener('resize', handleOrientationChange);
+    
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+      window.removeEventListener('orientationchange', handleOrientationChange);
+      window.removeEventListener('resize', handleOrientationChange);
+    };
   }, []);
 
   return (

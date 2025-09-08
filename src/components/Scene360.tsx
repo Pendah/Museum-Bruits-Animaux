@@ -30,6 +30,33 @@ interface Scene360Props {
   onAnimalDiscovered?: (animal: Animal) => void;
 }
 
+// Composant pour le bouton de recalibration
+function CalibrationButton({ onRecalibrate }: { onRecalibrate: () => void }) {
+  return (
+    <div style={{
+      position: 'absolute',
+      top: '20px',
+      left: '20px',
+      zIndex: 100
+    }}>
+      <button
+        onClick={onRecalibrate}
+        style={{
+          background: 'rgba(0, 0, 0, 0.7)',
+          border: 'none',
+          color: 'white',
+          padding: '8px 12px',
+          borderRadius: '6px',
+          cursor: 'pointer',
+          fontSize: '12px'
+        }}
+      >
+        📍 Recalibrer
+      </button>
+    </div>
+  );
+}
+
 function ForestEnvironment({ textureUrl }: { textureUrl?: string }) {
   const texture = useLoader(
     TextureLoader,
@@ -66,34 +93,80 @@ interface CameraControllerProps {
     gamma: number | null;
   };
   onDirectionChange?: (direction: THREE.Vector3) => void;
+  recalibrateRef?: React.MutableRefObject<(() => void) | null>;
 }
 
 function CameraController({
   orientation,
   onDirectionChange,
+  recalibrateRef,
 }: CameraControllerProps) {
   const { camera } = useThree();
-  const initialRotation = useRef<THREE.Euler | null>(null);
-
+  const initialOrientation = useRef<{ alpha: number; beta: number; gamma: number } | null>(null);
+  const smoothedRotation = useRef(new THREE.Euler());
+  
+  // Fonction de recalibration
+  const recalibrate = () => {
+    if (orientation.alpha !== null && orientation.beta !== null && orientation.gamma !== null) {
+      initialOrientation.current = {
+        alpha: orientation.alpha,
+        beta: orientation.beta,
+        gamma: orientation.gamma
+      };
+      // Reset la rotation lissée
+      smoothedRotation.current.set(0, 0, 0);
+      console.log('🧭 Gyroscope recalibré');
+    }
+  };
+  
+  // Exposer la fonction de recalibration
+  if (recalibrateRef) {
+    recalibrateRef.current = recalibrate;
+  }
+  
   useFrame(() => {
     if (
       orientation.alpha !== null &&
       orientation.beta !== null &&
       orientation.gamma !== null
     ) {
-      if (!initialRotation.current) {
-        initialRotation.current = camera.rotation.clone();
+      // Calibration initiale - définir l'orientation de départ
+      if (!initialOrientation.current) {
+        initialOrientation.current = {
+          alpha: orientation.alpha,
+          beta: orientation.beta,
+          gamma: orientation.gamma
+        };
+        return; // Skip le premier frame pour la calibration
       }
 
-      const alpha = (orientation.alpha * Math.PI) / 180;
-      const beta = (orientation.beta * Math.PI) / 180;
-      const gamma = (orientation.gamma * Math.PI) / 180;
+      // Calculer les deltas par rapport à la position initiale
+      const deltaAlpha = orientation.alpha - initialOrientation.current.alpha;
+      const deltaBeta = orientation.beta - initialOrientation.current.beta;
+      const deltaGamma = orientation.gamma - initialOrientation.current.gamma;
+      
+      // Gestion du wrap-around pour alpha (0-360°)
+      let normalizedAlpha = deltaAlpha;
+      if (normalizedAlpha > 180) normalizedAlpha -= 360;
+      if (normalizedAlpha < -180) normalizedAlpha += 360;
 
-      camera.rotation.set(
-        beta + initialRotation.current.x,
-        alpha + initialRotation.current.y,
-        gamma + initialRotation.current.z
-      );
+      // Conversion en radians avec mapping amélioré
+      const yaw = -(normalizedAlpha * Math.PI) / 180; // Rotation horizontale (Y)
+      const pitch = -(deltaBeta * Math.PI) / 180; // Rotation verticale (X)
+      const roll = (deltaGamma * Math.PI) / 180; // Roulis (Z) - optionnel
+
+      // Clamping pour éviter les rotations extrêmes
+      const clampedPitch = Math.max(-Math.PI/3, Math.min(Math.PI/3, pitch));
+      
+      // Lissage des mouvements pour éviter les secousses
+      const smoothingFactor = 0.1;
+      const targetRotation = new THREE.Euler(clampedPitch, yaw, 0, 'YXZ');
+      
+      smoothedRotation.current.x = THREE.MathUtils.lerp(smoothedRotation.current.x, targetRotation.x, smoothingFactor);
+      smoothedRotation.current.y = THREE.MathUtils.lerp(smoothedRotation.current.y, targetRotation.y, smoothingFactor);
+      
+      // Appliquer la rotation à la caméra
+      camera.rotation.copy(smoothedRotation.current);
 
       if (onDirectionChange) {
         const direction = new THREE.Vector3(0, 0, -1);
@@ -351,6 +424,7 @@ export const Scene360: React.FC<Scene360Props> = ({
   onAnimalDiscovered,
 }) => {
   const { orientation } = useDeviceOrientation();
+  const recalibrateRef = useRef<(() => void) | null>(null);
 
   const handleAnimalClick = (animal: Animal) => {
     if (onAnimalClick) {
@@ -358,8 +432,18 @@ export const Scene360: React.FC<Scene360Props> = ({
     }
   };
 
+  const handleRecalibrate = () => {
+    if (recalibrateRef.current) {
+      recalibrateRef.current();
+    }
+  };
+
   return (
-    <div style={{ width: "100vw", height: "100vh" }}>
+    <div style={{ width: "100vw", height: "100vh", position: "relative" }}>
+      {/* Bouton de recalibration gyroscope */}
+      {useGyroscope && gameState?.isListening && (
+        <CalibrationButton onRecalibrate={handleRecalibrate} />
+      )}
       <Canvas
         camera={{
           position: [0, 0, 0.1],
@@ -382,6 +466,7 @@ export const Scene360: React.FC<Scene360Props> = ({
             <CameraController
               orientation={orientation}
               onDirectionChange={() => {}} // Plus besoin
+              recalibrateRef={recalibrateRef}
             />
           )}
           {!useGyroscope && (
