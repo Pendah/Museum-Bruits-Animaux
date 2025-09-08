@@ -190,18 +190,20 @@ export const useSpatialAudio = () => {
     if (!gainNode || !audioContext) return;
 
     // Calcul du volume basé uniquement sur l'angle (0° = fort, 180° = faible)
-    const maxVolume = 0.8; // Volume max quand on regarde direct (0°)
-    const minVolume = 0.05; // Volume min plus audible
-    const maxAngle = 120; // Angle plus permissif
+    const maxVolume = 1.0; // Volume max quand on regarde direct (0°)
+    const minVolume = 0.1; // Volume minimum plus audible
+    const maxAngle = 90; // Zone d'audibilité plus restreinte (90° au lieu de 120°)
     
-    // Plus l'angle est petit, plus le volume est fort
-    const volumeRatio = Math.max(0, 1 - (angularDistance / maxAngle));
-    const volume = minVolume + (maxVolume - minVolume) * volumeRatio; // Courbe linéaire pour plus de contrôle
+    // Plus l'angle est petit, plus le volume est fort avec une courbe exponentielle
+    const normalizedAngle = Math.min(angularDistance, maxAngle) / maxAngle;
+    const volumeRatio = Math.pow(1 - normalizedAngle, 2); // Courbe quadratique pour plus de contraste
+    const volume = minVolume + (maxVolume - minVolume) * volumeRatio;
 
-    gainNode.gain.setValueAtTime(volume, audioContext.currentTime);
+    // Transition douce du volume
+    gainNode.gain.setTargetAtTime(volume, audioContext.currentTime, 0.1);
     
-    // Debug du volume
-    console.log(`🔊 Volume: ${volume.toFixed(2)} | Angle: ${angularDistance.toFixed(1)}° | Animal: ${animalId}`);
+    // Debug du volume avec plus de détails
+    console.log(`🔊 Volume: ${volume.toFixed(3)} | Angle: ${angularDistance.toFixed(1)}° | Ratio: ${volumeRatio.toFixed(3)} | Animal: ${animalId}`);
   }, [audioContext]);
 
   return {

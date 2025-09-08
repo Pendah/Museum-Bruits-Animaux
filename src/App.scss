@@ -16,7 +16,7 @@ $transition: all 0.3s ease;
   transform: translateX(-50%);
   z-index: 100;
   text-align: center;
-  
+
   .hint-message {
     background: rgba(0, 0, 0, 0.8);
     border: 2px solid rgba(255, 255, 255, 0.3);
@@ -28,26 +28,26 @@ $transition: all 0.3s ease;
     display: flex;
     align-items: center;
     gap: 10px;
-    
+
     span {
       font-size: 14px;
     }
-    
+
     // Animation de pulsation pour attirer l'attention
     animation: hintPulse 2s ease-in-out;
   }
 }
 
 @keyframes hintPulse {
-  0% { 
+  0% {
     transform: scale(1);
     box-shadow: 0 4px 20px rgba(255, 255, 255, 0.1);
   }
-  50% { 
+  50% {
     transform: scale(1.05);
     box-shadow: 0 8px 30px rgba(255, 255, 255, 0.2);
   }
-  100% { 
+  100% {
     transform: scale(1);
     box-shadow: 0 4px 20px rgba(255, 255, 255, 0.1);
   }
@@ -60,9 +60,9 @@ $transition: all 0.3s ease;
   transform: translate(-50%, -50%);
   z-index: 200;
   cursor: pointer;
-  
+
   .click-target {
-    background: linear-gradient(135deg, #4CAF50, #45a049);
+    background: linear-gradient(135deg, #4caf50, #45a049);
     border: 3px solid white;
     border-radius: 50%;
     width: 120px;
@@ -73,19 +73,19 @@ $transition: all 0.3s ease;
     justify-content: center;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
     animation: pulse 2s infinite;
-    
+
     .animal-icon {
       font-size: 32px;
       margin-bottom: 5px;
     }
-    
+
     p {
       margin: 0;
       color: white;
       font-weight: bold;
       text-align: center;
       font-size: 12px;
-      
+
       &.animal-name {
         font-size: 14px;
         margin-top: 5px;
@@ -95,9 +95,15 @@ $transition: all 0.3s ease;
 }
 
 @keyframes pulse {
-  0% { box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); }
-  50% { box-shadow: 0 8px 32px rgba(76, 175, 80, 0.6); }
-  100% { box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); }
+  0% {
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  }
+  50% {
+    box-shadow: 0 8px 32px rgba(76, 175, 80, 0.6);
+  }
+  100% {
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  }
 }
 
 // Reset et base
@@ -108,7 +114,7 @@ $transition: all 0.3s ease;
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   background-color: #000;
   color: $text-light;
   overflow: hidden;
@@ -121,7 +127,7 @@ body {
   width: 100vw;
   height: 100vh;
   position: relative;
-  
+
   canvas {
     position: absolute !important;
     top: 0 !important;
@@ -157,7 +163,7 @@ body {
     .discovered-animals,
     .permission-modal {
       pointer-events: auto;
-      
+
       // Réactiver tous les éléments enfants pour ces composants
       * {
         pointer-events: auto;
@@ -167,11 +173,11 @@ body {
     // listening-ui : seuls les éléments visibles sont cliquables
     .listening-ui {
       pointer-events: none;
-      
+
       .listening-indicator,
       .animal-found {
         pointer-events: auto;
-        
+
         * {
           pointer-events: auto;
         }
@@ -262,29 +268,6 @@ body {
 
   .listening-indicator {
     text-align: center;
-    
-    .sound-waves {
-      display: flex;
-      justify-content: center;
-      margin-bottom: 20px;
-      gap: 5px;
-      
-      .wave {
-        width: 4px;
-        height: 40px;
-        background: $accent-color;
-        border-radius: 2px;
-        animation: wave 1.5s infinite ease-in-out;
-        
-        &:nth-child(2) {
-          animation-delay: 0.1s;
-        }
-        
-        &:nth-child(3) {
-          animation-delay: 0.2s;
-        }
-      }
-    }
 
     p {
       font-size: 1rem;
@@ -411,11 +394,41 @@ body {
       border-radius: $border-radius;
       overflow: hidden;
 
-      .animal-video {
+      .custom-video-player {
+        position: relative;
+        display: inline-block;
         width: 100%;
-        height: auto;
-        max-height: 300px;
-        object-fit: cover;
+
+        .animal-video {
+          width: 100%;
+          height: auto;
+          max-height: 300px;
+          object-fit: cover;
+        }
+
+        .fullscreen-btn {
+          position: absolute;
+          bottom: 10px;
+          right: 10px;
+          background: rgba(0, 0, 0, 0.7);
+          border: none;
+          color: white;
+          padding: 8px 12px;
+          border-radius: 6px;
+          cursor: pointer;
+          font-size: 16px;
+          transition: $transition;
+          z-index: 10;
+
+          &:hover {
+            background: rgba(0, 0, 0, 0.9);
+            transform: scale(1.1);
+          }
+
+          &:active {
+            transform: scale(0.95);
+          }
+        }
       }
     }
 
@@ -500,7 +513,9 @@ body {
 
 // Animations
 @keyframes wave {
-  0%, 40%, 100% {
+  0%,
+  40%,
+  100% {
     transform: scaleY(0.4);
   }
   20% {
@@ -515,8 +530,51 @@ body {
       padding: 15px;
     }
 
-    .app-header h1 {
-      font-size: 1.3rem;
+    @keyframes scaleBounce {
+      0% {
+        scale: 1;
+      }
+      50% {
+        scale: 1.1;
+      }
+      100% {
+        scale: 1;
+      }
+    }
+
+    .app-header {
+      .listening-indicator {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+        .sound-waves {
+          width: 40px;
+          display: flex;
+          justify-content: center;
+          animation: scaleBounce 2s infinite;
+          gap: 5px;
+
+          .wave {
+            width: 4px;
+            height: 40px;
+            background: $accent-color;
+            border-radius: 2px;
+            animation: wave 1.5s infinite ease-in-out;
+
+            &:nth-child(2) {
+              animation-delay: 0.1s;
+            }
+
+            &:nth-child(3) {
+              animation-delay: 0.2s;
+            }
+          }
+        }
+        h1 {
+          font-size: 1.3rem;
+        }
+      }
     }
 
     .start-screen .start-btn {
@@ -527,7 +585,7 @@ body {
 
   .animal-modal {
     margin: 10px;
-    
+
     .modal-header {
       padding: 15px;
     }
@@ -566,7 +624,7 @@ body {
     font-size: 0.9rem;
     opacity: 0.6;
     transition: $transition;
-    
+
     &.active {
       opacity: 1;
       color: $accent-color;
@@ -607,7 +665,7 @@ body {
 
 @media (max-width: 768px) {
   .navigation-switch {
-    top: 70px;
+    top: 100px;
     right: 15px;
     min-width: 180px;
     padding: 12px;

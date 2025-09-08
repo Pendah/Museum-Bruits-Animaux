@@ -8,7 +8,7 @@ export const animals: Animal[] = [
     soundFile: '/assets/sounds/martre.mp3',
     videoFile: '/assets/videos/martre.mp4',
     position: { x: -12, y: 2, z: -8 },
-    detectionRadius: 3
+    detectionRadius: 4
   },
   {
     id: 'fox',
@@ -17,7 +17,7 @@ export const animals: Animal[] = [
     soundFile: '/assets/sounds/fox.mp3',
     videoFile: '/assets/videos/fox.mp4',
     position: { x: 10, y: 0, z: -12 },
-    detectionRadius: 3
+    detectionRadius: 4
   },
   {
     id: 'wildboar',
@@ -26,6 +26,6 @@ export const animals: Animal[] = [
     soundFile: '/assets/sounds/wildboar.mp3',
     videoFile: '/assets/videos/wildboar.mp4',
     position: { x: 8, y: 0, z: 14 },
-    detectionRadius: 3
+    detectionRadius: 4
   }
 ];

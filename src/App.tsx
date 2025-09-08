@@ -101,14 +101,14 @@ function App() {
     console.log(`🎯 ${currentlyPlayingAnimal.name} | Angle: ${angleDegrees.toFixed(1)}°`);
 
 
-    const isNearby = angleDegrees <= 30; // Proche si dans un cône de 30°
-    const canClick = angleDegrees <= 15; // Zone de clic si dans un cône de 15°
+    const isNearby = angleDegrees <= 35; // Proche si dans un cône de 35°
+    const canClick = angleDegrees <= 20; // Zone de clic si dans un cône de 20°
 
-    // Déterminer le niveau d'indice par paliers basé sur l'angle
+    // Déterminer le niveau d'indice par paliers basé sur l'angle (ajusté aux nouvelles zones)
     let hintLevel: 'far' | 'medium' | 'close' | 'veryClose' = 'far';
-    if (angleDegrees <= 15) hintLevel = 'veryClose';      // Regarde quasi direct
-    else if (angleDegrees <= 30) hintLevel = 'close';     // Dans le bon secteur  
-    else if (angleDegrees <= 60) hintLevel = 'medium';    // Se rapproche de la direction
+    if (angleDegrees <= 20) hintLevel = 'veryClose';      // Zone de clic élargie
+    else if (angleDegrees <= 35) hintLevel = 'close';     // Zone de proximité élargie  
+    else if (angleDegrees <= 70) hintLevel = 'medium';    // Se rapproche de la direction
 
     // Afficher indice seulement si changement de palier
     const now = Date.now();
@@ -208,9 +208,9 @@ function App() {
   }, [gameState.discoveredAnimals, playAnimalSound]);
 
 
-  // Vérification de la détection d'animal
+  // Vérification de la détection d'animal plus fréquente pour un volume réactif
   useEffect(() => {
-    const interval = setInterval(checkAnimalDetection, 500);
+    const interval = setInterval(checkAnimalDetection, 100); // 10x par seconde au lieu de 2x
     return () => clearInterval(interval);
   }, [checkAnimalDetection]);
 
