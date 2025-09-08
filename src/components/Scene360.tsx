@@ -153,7 +153,7 @@ function CameraController({
       // Conversion en radians avec mapping amélioré
       const yaw = -(normalizedAlpha * Math.PI) / 180; // Rotation horizontale (Y)
       const pitch = -(deltaBeta * Math.PI) / 180; // Rotation verticale (X)
-      const roll = (deltaGamma * Math.PI) / 180; // Roulis (Z) - optionnel
+      // const roll = (deltaGamma * Math.PI) / 180; // Roulis (Z) - désactivé
 
       // Clamping pour éviter les rotations extrêmes
       const clampedPitch = Math.max(-Math.PI/3, Math.min(Math.PI/3, pitch));
@@ -302,14 +302,12 @@ function AnimalDetector({
   updateVolumeByAngle,
   gameState,
   onAnimalDiscovered,
-  useGyroscope,
 }: {
   currentlyPlayingAnimal: Animal | null;
   onDetectionUpdate?: (state: DetectionState | null) => void;
   updateVolumeByAngle?: (animalId: string, angleDegrees: number) => void;
   gameState?: { discoveredAnimals: string[]; isListening: boolean };
   onAnimalDiscovered?: (animal: Animal) => void;
-  useGyroscope: boolean;
 }) {
   const { camera } = useThree();
   const frameCount = useRef(0);
@@ -484,7 +482,6 @@ export const Scene360: React.FC<Scene360Props> = ({
             updateVolumeByAngle={updateVolumeByAngle}
             gameState={gameState}
             onAnimalDiscovered={onAnimalDiscovered}
-            useGyroscope={useGyroscope}
           />
         </Suspense>
       </Canvas>

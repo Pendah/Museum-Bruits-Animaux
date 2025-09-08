@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from "react";
-import * as THREE from "three";
 import { Scene360 } from "./components/Scene360";
 import { GameUI } from "./components/GameUI";
 import { AnimalModal } from "./components/AnimalModal";
