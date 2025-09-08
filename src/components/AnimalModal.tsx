@@ -81,18 +81,6 @@ const VideoPlayer: React.FC<{ videoSrc: string }> = ({ videoSrc }) => {
     }
   };
 
-  // Gestion spéciale pour iOS webkitEnterFullscreen
-  const handleWebkitFullscreenChange = () => {
-    if (isIOS()) {
-      // Sur iOS, webkitEnterFullscreen ne déclenche pas les événements standard
-      // On utilise les événements spécifiques WebKit
-      const video = videoRef.current;
-      if (video) {
-        const isVideoFullscreen = (video as any).webkitDisplayingFullscreen;
-        setIsFullscreen(isVideoFullscreen);
-      }
-    }
-  };
 
   useEffect(() => {
     const video = videoRef.current;
