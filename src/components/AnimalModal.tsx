@@ -12,30 +12,65 @@ const VideoPlayer: React.FC<{ videoSrc: string }> = ({ videoSrc }) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
+  // Détecter iOS/Safari
+  const isIOS = () => {
+    return /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+           (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  };
+
   const toggleFullscreen = async () => {
     const video = videoRef.current;
     if (!video) return;
 
     try {
-      if (!document.fullscreenElement) {
-        await video.requestFullscreen();
-        setIsFullscreen(true);
+      // Check si on est déjà en fullscreen
+      const isCurrentlyFullscreen = !!(document.fullscreenElement || 
+        (document as any).webkitFullscreenElement);
+
+      if (!isCurrentlyFullscreen) {
+        // Entrer en fullscreen
+        if (isIOS() && (video as any).webkitEnterFullscreen) {
+          // iOS Safari - utiliser webkitEnterFullscreen
+          console.log('📱 iOS détecté - utilisation webkitEnterFullscreen');
+          (video as any).webkitEnterFullscreen();
+          setIsFullscreen(true);
+        } else if (video.requestFullscreen) {
+          // Standard API
+          await video.requestFullscreen();
+          setIsFullscreen(true);
+        } else if ((video as any).webkitRequestFullscreen) {
+          // WebKit fallback
+          await (video as any).webkitRequestFullscreen();
+          setIsFullscreen(true);
+        } else {
+          console.warn('⚠️ Fullscreen non supporté sur cet appareil');
+        }
       } else {
-        await document.exitFullscreen();
+        // Sortir du fullscreen
+        if (document.exitFullscreen) {
+          await document.exitFullscreen();
+        } else if ((document as any).webkitExitFullscreen) {
+          await (document as any).webkitExitFullscreen();
+        }
         setIsFullscreen(false);
       }
     } catch (error) {
-      console.error('Erreur plein écran:', error);
+      console.error('❌ Erreur plein écran:', error);
     }
   };
 
   const handleFullscreenChange = () => {
-    setIsFullscreen(!!document.fullscreenElement);
+    const isCurrentlyFullscreen = !!(document.fullscreenElement || 
+      (document as any).webkitFullscreenElement);
+    setIsFullscreen(isCurrentlyFullscreen);
   };
 
   const handleOrientationChange = () => {
     // Force un recalcul des dimensions après changement d'orientation
-    if (videoRef.current && document.fullscreenElement) {
+    const isCurrentlyFullscreen = !!(document.fullscreenElement || 
+      (document as any).webkitFullscreenElement);
+    
+    if (videoRef.current && isCurrentlyFullscreen) {
       setTimeout(() => {
         const video = videoRef.current;
         if (video) {
@@ -46,10 +81,32 @@ const VideoPlayer: React.FC<{ videoSrc: string }> = ({ videoSrc }) => {
     }
   };
 
+  // Gestion spéciale pour iOS webkitEnterFullscreen
+  const handleWebkitFullscreenChange = () => {
+    if (isIOS()) {
+      // Sur iOS, webkitEnterFullscreen ne déclenche pas les événements standard
+      // On utilise les événements spécifiques WebKit
+      const video = videoRef.current;
+      if (video) {
+        const isVideoFullscreen = (video as any).webkitDisplayingFullscreen;
+        setIsFullscreen(isVideoFullscreen);
+      }
+    }
+  };
+
   useEffect(() => {
+    const video = videoRef.current;
+    
+    // Événements fullscreen standard
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
     document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+    
+    // Événements spécifiques iOS pour webkitEnterFullscreen
+    if (video && isIOS()) {
+      video.addEventListener('webkitbeginfullscreen', () => setIsFullscreen(true));
+      video.addEventListener('webkitendfullscreen', () => setIsFullscreen(false));
+    }
     
     // Écouter les changements d'orientation
     window.addEventListener('orientationchange', handleOrientationChange);
@@ -59,6 +116,12 @@ const VideoPlayer: React.FC<{ videoSrc: string }> = ({ videoSrc }) => {
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
       document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
       document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+      
+      if (video && isIOS()) {
+        video.removeEventListener('webkitbeginfullscreen', () => setIsFullscreen(true));
+        video.removeEventListener('webkitendfullscreen', () => setIsFullscreen(false));
+      }
+      
       window.removeEventListener('orientationchange', handleOrientationChange);
       window.removeEventListener('resize', handleOrientationChange);
     };
