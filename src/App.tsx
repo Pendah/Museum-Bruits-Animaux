@@ -36,7 +36,7 @@ function App() {
   const [lastHintTime, setLastHintTime] = useState<number>(0);
   const [currentHintLevel, setCurrentHintLevel] = useState<string>('');
 
-  const { orientation, permission, requestPermission } = useDeviceOrientation();
+  const { permission, requestPermission } = useDeviceOrientation();
   const {
     initializeAudioContext,
     playAnimalSound,
@@ -103,7 +103,6 @@ function App() {
     // Seuils basés sur l'angle (distance angulaire)
     const ANGLE_THRESHOLD = currentlyPlayingAnimal.detectionRadius;
 
-    const isInDirection = angleDegrees <= ANGLE_THRESHOLD;
     const isNearby = angleDegrees <= 30; // Proche si dans un cône de 30°
     const canClick = angleDegrees <= 15; // Zone de clic si dans un cône de 15°
 

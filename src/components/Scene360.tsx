@@ -128,7 +128,7 @@ function ClickableAnimalMarker({ animal, onAnimalClick }: {
     }
   });
   
-  const handleClick = (e: THREE.Event) => {
+  const handleClick = (e: any) => {
     e.stopPropagation();
     console.log(`🎯 Clic sur ${animal.name}`);
     onAnimalClick(animal);
