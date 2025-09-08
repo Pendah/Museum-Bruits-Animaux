@@ -142,7 +142,6 @@ function CameraController({
       // Calculer les deltas par rapport à la position initiale
       const deltaAlpha = orientation.alpha - initialOrientation.current.alpha;
       const deltaBeta = orientation.beta - initialOrientation.current.beta;
-      const deltaGamma = orientation.gamma - initialOrientation.current.gamma;
       
       // Gestion du wrap-around pour alpha (0-360°)
       let normalizedAlpha = deltaAlpha;

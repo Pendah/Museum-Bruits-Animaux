@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
+import { useState } from "react";
 import type { Animal } from "../types";
-import NavigationSwitch from "./NavigationSwitch";
 
 interface DetectionState {
   distance: number;
@@ -46,6 +46,8 @@ export const GameUI: React.FC<GameUIProps> = ({
   onRestartGame,
   showVideoModal,
 }) => {
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  
   const isGameCompleted =
     discoveredAnimals.length === totalAnimals &&
     !showVideoModal &&
@@ -72,6 +74,66 @@ export const GameUI: React.FC<GameUIProps> = ({
             </div>
           </motion.div>
         )}
+
+        {/* Modal des paramètres */}
+        {showSettingsModal && (
+          <motion.div
+            className="settings-modal-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowSettingsModal(false)}
+          >
+            <motion.div
+              className="settings-modal"
+              initial={{ scale: 0.9, y: 50 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 50 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="modal-header">
+                <h2>Paramètres</h2>
+                <button 
+                  className="close-btn" 
+                  onClick={() => setShowSettingsModal(false)}
+                >
+                  ×
+                </button>
+              </div>
+              
+              <div className="modal-content">
+                <h3>Mode de navigation</h3>
+                <div className="navigation-choice">
+                  <div 
+                    className={`choice-option ${!useGyroscope ? 'active' : ''}`}
+                    onClick={() => {
+                      onToggleNavigation(false);
+                      setShowSettingsModal(false);
+                    }}
+                  >
+                    <span className="choice-icon">👆</span>
+                    <span className="choice-label">Tactile</span>
+                    <span className="choice-desc">Glissez votre doigt</span>
+                  </div>
+                  
+                  {gyroscopeAvailable && (
+                    <div 
+                      className={`choice-option ${useGyroscope ? 'active' : ''}`}
+                      onClick={() => {
+                        onToggleNavigation(true);
+                        setShowSettingsModal(false);
+                      }}
+                    >
+                      <span className="choice-icon">📱</span>
+                      <span className="choice-label">Gyroscope</span>
+                      <span className="choice-desc">Bougez votre appareil</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
       </AnimatePresence>
 
       <div className="ui-overlay">
@@ -90,22 +152,55 @@ export const GameUI: React.FC<GameUIProps> = ({
           </div>
         </header>
 
-        <NavigationSwitch
-          useGyroscope={useGyroscope}
-          onToggle={onToggleNavigation}
-          gyroscopeAvailable={gyroscopeAvailable}
-        />
+        {/* Icône paramètres pendant le jeu */}
+        {isListening && (
+          <div className="settings-icon" onClick={() => setShowSettingsModal(true)}>
+            ⚙️
+          </div>
+        )}
 
         {!isListening ? (
           <div className="start-screen">
-            <motion.button
-              className="start-btn"
-              onClick={onStartListening}
-              whileTap={{ scale: 0.95 }}
-              whileHover={{ scale: 1.05 }}
+            <motion.div
+              className="start-modal"
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              transition={{ type: "spring", stiffness: 300 }}
             >
-              Commencer l'exploration
-            </motion.button>
+              <h2>Mode de navigation</h2>
+              <p>Choisissez votre mode de navigation préféré :</p>
+              
+              <div className="navigation-choice">
+                <div 
+                  className={`choice-option ${!useGyroscope ? 'active' : ''}`}
+                  onClick={() => onToggleNavigation(false)}
+                >
+                  <span className="choice-icon">👆</span>
+                  <span className="choice-label">Tactile</span>
+                  <span className="choice-desc">Glissez votre doigt</span>
+                </div>
+                
+                {gyroscopeAvailable && (
+                  <div 
+                    className={`choice-option ${useGyroscope ? 'active' : ''}`}
+                    onClick={() => onToggleNavigation(true)}
+                  >
+                    <span className="choice-icon">📱</span>
+                    <span className="choice-label">Gyroscope</span>
+                    <span className="choice-desc">Bougez votre appareil</span>
+                  </div>
+                )}
+              </div>
+
+              <motion.button
+                className="start-btn"
+                onClick={onStartListening}
+                whileTap={{ scale: 0.95 }}
+                whileHover={{ scale: 1.05 }}
+              >
+                Commencer l'exploration
+              </motion.button>
+            </motion.div>
           </div>
         ) : isGameCompleted ? (
           <div className="listening-ui">
