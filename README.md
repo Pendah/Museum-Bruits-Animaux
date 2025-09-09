@@ -2,7 +2,7 @@
 
 Une expérience web immersive pour découvrir les bruits nocturnes des animaux, développée pour le Muséum de Toulouse.
 
-## 🎯 Concept
+## 🎯 Concept test
 
 Cette application propose une expérience 360° où les utilisateurs :
 - Évoluent dans un environnement forestier nocturne
