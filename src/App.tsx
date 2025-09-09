@@ -197,7 +197,7 @@ function App() {
           color: 'white',
           fontSize: '18px',
           textAlign: 'center',
-          zIndex: 500 // Plus bas que GameUI
+          zIndex: 5 // Plus bas que GameUI (qui a z-index: 10)
         }}>
           <div>
             <p>🔄 Initialisation du gyroscope...</p>
