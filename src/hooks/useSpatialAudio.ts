@@ -202,8 +202,6 @@ export const useSpatialAudio = () => {
     // Transition douce du volume
     gainNode.gain.setTargetAtTime(volume, audioContext.currentTime, 0.1);
     
-    // Debug du volume avec plus de détails
-    console.log(`🔊 Volume: ${volume.toFixed(3)} | Angle: ${angularDistance.toFixed(1)}° | Ratio: ${volumeRatio.toFixed(3)} | Animal: ${animalId}`);
   }, [audioContext]);
 
   return {
