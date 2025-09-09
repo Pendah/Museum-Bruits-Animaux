@@ -197,7 +197,7 @@ function App() {
           color: 'white',
           fontSize: '18px',
           textAlign: 'center',
-          zIndex: 1000
+          zIndex: 500 // Plus bas que GameUI
         }}>
           <div>
             <p>🔄 Initialisation du gyroscope...</p>
@@ -208,6 +208,7 @@ function App() {
         </div>
       )}
 
+      {/* GameUI toujours affiché */}
       <GameUI
         isListening={gameState.isListening}
         currentAnimal={gameState.currentAnimal}
