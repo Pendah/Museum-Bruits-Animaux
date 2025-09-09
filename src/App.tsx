@@ -123,6 +123,9 @@ function App() {
       return;
     }
 
+    // Relancer l'ambiance sonore après fermeture de la modal
+    await playAmbiance();
+
     // Sinon, passer au prochain animal
     const undiscoveredAnimals = animals.filter(
       (animal) => !gameState.discoveredAnimals.includes(animal.id)
@@ -136,7 +139,7 @@ function App() {
       setCurrentlyPlayingAnimal(randomAnimal);
       await playAnimalSound(randomAnimal);
     }
-  }, [gameState.discoveredAnimals, playAnimalSound, stopAllSounds]);
+  }, [gameState.discoveredAnimals, playAnimalSound, stopAllSounds, playAmbiance]);
 
   const restartGame = useCallback(async () => {
     // Reset de l'état du jeu

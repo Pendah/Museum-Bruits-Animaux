@@ -148,9 +148,12 @@ function CameraController({
       if (normalizedAlpha > 180) normalizedAlpha -= 360;
       if (normalizedAlpha < -180) normalizedAlpha += 360;
 
+      // Détection d'Android pour inverser le pitch
+      const isAndroid = /Android/i.test(navigator.userAgent);
+      
       // Conversion en radians avec mapping amélioré
       const yaw = -(normalizedAlpha * Math.PI) / 180; // Rotation horizontale (Y)
-      const pitch = -(deltaBeta * Math.PI) / 180; // Rotation verticale (X)
+      const pitch = isAndroid ? (deltaBeta * Math.PI) / 180 : -(deltaBeta * Math.PI) / 180; // Rotation verticale (X)
       // const roll = (deltaGamma * Math.PI) / 180; // Roulis (Z) - désactivé
 
       // Clamping pour éviter les rotations extrêmes

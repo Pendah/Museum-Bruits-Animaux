@@ -27,5 +27,23 @@ export const animals: Animal[] = [
     videoFile: '/assets/videos/wildboar.mp4',
     position: { x: 8, y: 0, z: 14 },
     detectionRadius: 4
+  },
+  {
+    id: 'deer',
+    name: 'Chevreuil',
+    description: 'Le chevreuil est un cervidé élégant et discret qui habite les forêts et les lisières. La nuit, il émet des aboiements courts et aigus pour communiquer avec ses congénères ou signaler un danger.',
+    soundFile: '/assets/sounds/deer.mp3',
+    videoFile: '/assets/videos/deer.mp4',
+    position: { x: -8, y: 1, z: 12 },
+    detectionRadius: 4
+  },
+  {
+    id: 'genet',
+    name: 'Genette commune',
+    description: 'La genette commune est un petit carnivore nocturne aux allures de chat sauvage. Elle émet des miaulements, des grognements et des cris aigus pour marquer son territoire et communiquer, principalement active la nuit.',
+    soundFile: '/assets/sounds/genet.mp3',
+    videoFile: '/assets/videos/genet.jpg',
+    position: { x: 12, y: 1, z: -6 },
+    detectionRadius: 4
   }
 ];
