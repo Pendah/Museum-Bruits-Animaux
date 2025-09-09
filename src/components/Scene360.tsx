@@ -124,6 +124,16 @@ function CameraController({
   }
   
   useFrame(() => {
+    // Debug d'entrée dans useFrame
+    if (Math.random() < 0.001) {
+      console.log('🎮 CameraController useFrame called:', {
+        hasOrientation: !!(orientation.alpha !== null && orientation.beta !== null && orientation.gamma !== null),
+        alpha: orientation.alpha,
+        beta: orientation.beta,
+        gamma: orientation.gamma
+      });
+    }
+
     if (
       orientation.alpha !== null &&
       orientation.beta !== null &&
@@ -429,7 +439,7 @@ export const Scene360: React.FC<Scene360Props> = ({
 
   // Debug orientation data
   useEffect(() => {
-    if (useGyroscope && orientation) {
+    if (useGyroscope && orientation && Math.random() < 0.05) {
       console.log('🎯 Scene360 orientation data:', {
         alpha: orientation.alpha?.toFixed(1),
         beta: orientation.beta?.toFixed(1),
