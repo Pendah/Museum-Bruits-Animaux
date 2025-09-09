@@ -3,7 +3,6 @@ import { Canvas, useFrame, useThree, useLoader } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 import { TextureLoader } from "three";
-import { useDeviceOrientation } from "../hooks/useDeviceOrientation";
 import type { Animal } from "../types";
 
 interface DetectionState {
@@ -101,7 +100,6 @@ function CameraController({
   
   const recalibrate = () => {
     initialOrientation.current = null;
-    console.log("🧭 Gyroscope recalibré");
   };
 
   if (recalibrateRef) {
@@ -124,7 +122,6 @@ function CameraController({
           alpha: eventData.alpha,
           beta: eventData.beta
         };
-        console.log('🧭 Calibration initiale:', initialOrientation.current);
         return;
       }
 
@@ -155,17 +152,6 @@ function CameraController({
       // Appliquer la rotation lissée à la caméra
       camera.rotation.set(smoothedX, smoothedY, 0, 'YXZ');
       
-      // Debug occasionnel
-      if (Math.random() < 0.01) {
-        console.log('📱 Device orientation:', {
-          alpha: eventData.alpha.toFixed(1),
-          beta: eventData.beta.toFixed(1),
-          deltaAlpha: deltaAlpha.toFixed(1),
-          deltaBeta: deltaBeta.toFixed(1),
-          yaw: yaw.toFixed(3),
-          pitch: clampedPitch.toFixed(3)
-        });
-      }
 
       if (onDirectionChange) {
         const direction = new THREE.Vector3(0, 0, -1);
@@ -174,11 +160,9 @@ function CameraController({
       }
     };
 
-    console.log('📡 Adding direct deviceorientation listener');
     window.addEventListener('deviceorientation', deviceOrientationHandler, false);
     
     return () => {
-      console.log('📡 Removing direct deviceorientation listener');
       window.removeEventListener('deviceorientation', deviceOrientationHandler);
     };
   }, [camera, onDirectionChange]);
@@ -404,25 +388,8 @@ export const Scene360: React.FC<Scene360Props> = ({
   gameState,
   onAnimalDiscovered,
 }) => {
-  const { orientation } = useDeviceOrientation();
   const recalibrateRef = useRef<(() => void) | null>(null);
 
-  // Debug orientation data
-  useEffect(() => {
-    if (useGyroscope && orientation && Math.random() < 0.05) {
-      console.log("🎯 Scene360 orientation data:", {
-        alpha: orientation.alpha?.toFixed(1),
-        beta: orientation.beta?.toFixed(1),
-        gamma: orientation.gamma?.toFixed(1),
-        hasData: !!(orientation.alpha || orientation.beta || orientation.gamma),
-        useGyroscope,
-        hasNonNullData:
-          orientation.alpha !== null &&
-          orientation.beta !== null &&
-          orientation.gamma !== null,
-      });
-    }
-  }, [orientation, useGyroscope]);
 
   const handleRecalibrate = () => {
     if (recalibrateRef.current) {
