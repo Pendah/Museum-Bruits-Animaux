@@ -88,88 +88,91 @@ function ForestEnvironment({ textureUrl }: { textureUrl?: string }) {
 }
 
 interface CameraControllerProps {
-  orientation: {
-    alpha: number | null;
-    beta: number | null;
-    gamma: number | null;
-  };
   onDirectionChange?: (direction: THREE.Vector3) => void;
   recalibrateRef?: React.MutableRefObject<(() => void) | null>;
 }
 
 function CameraController({
-  orientation,
   onDirectionChange,
   recalibrateRef,
 }: CameraControllerProps) {
   const { camera } = useThree();
-  const initialOrientation = useRef<{
-    alpha: number;
-    beta: number;
-    gamma: number;
-  } | null>(null);
-
+  const initialOrientation = useRef<{ alpha: number; beta: number } | null>(null);
+  
   const recalibrate = () => {
-    if (
-      orientation.alpha !== null &&
-      orientation.beta !== null &&
-      orientation.gamma !== null
-    ) {
-      initialOrientation.current = {
-        alpha: orientation.alpha,
-        beta: orientation.beta,
-        gamma: orientation.gamma,
-      };
-      console.log("🧭 Gyroscope recalibré");
-    }
+    initialOrientation.current = null;
+    console.log("🧭 Gyroscope recalibré");
   };
 
   if (recalibrateRef) {
     recalibrateRef.current = recalibrate;
   }
 
-  useFrame(() => {
-    if (
-      orientation.alpha !== null &&
-      orientation.beta !== null &&
-      orientation.gamma !== null
-    ) {
+  // Approche directe comme l'exemple 2020
+  useEffect(() => {
+    if (typeof window.DeviceOrientationEvent === 'undefined') {
+      console.warn('DeviceOrientationEvent not supported');
+      return;
+    }
+
+    const deviceOrientationHandler = (eventData: DeviceOrientationEvent) => {
+      if (eventData.alpha === null || eventData.beta === null) return;
+      
+      // Première fois - calibrer
       if (!initialOrientation.current) {
         initialOrientation.current = {
-          alpha: orientation.alpha,
-          beta: orientation.beta,
-          gamma: orientation.gamma,
+          alpha: eventData.alpha,
+          beta: eventData.beta
         };
+        console.log('🧭 Calibration initiale:', initialOrientation.current);
         return;
       }
 
-      const deltaAlpha = orientation.alpha - initialOrientation.current.alpha;
-      const deltaBeta = orientation.beta - initialOrientation.current.beta;
+      // Calculer la différence depuis la calibration
+      let deltaAlpha = eventData.alpha - initialOrientation.current.alpha;
+      const deltaBeta = eventData.beta - initialOrientation.current.beta;
+      
+      // Gérer le wraparound 0-360°
+      if (deltaAlpha > 180) deltaAlpha -= 360;
+      if (deltaAlpha < -180) deltaAlpha += 360;
 
-      let normalizedAlpha = deltaAlpha;
-      if (normalizedAlpha > 180) normalizedAlpha -= 360;
-      if (normalizedAlpha < -180) normalizedAlpha += 360;
-
-      const isAndroid = /Android/i.test(navigator.userAgent);
-
-      const yaw = -(normalizedAlpha * Math.PI) / 180;
-      const pitch = isAndroid
-        ? (deltaBeta * Math.PI) / 180
-        : -(deltaBeta * Math.PI) / 180;
-
-      const clampedPitch = Math.max(-Math.PI / 3, Math.min(Math.PI / 3, pitch));
-
-      const targetRotation = new THREE.Euler(clampedPitch, yaw, 0, "YXZ");
-
-      camera.rotation.copy(targetRotation);
+      // Convertir en rotation Three.js (simple)
+      const yaw = -(deltaAlpha * Math.PI) / 180;
+      const pitch = -(deltaBeta * Math.PI) / 180;
+      
+      // Limiter le pitch pour éviter les retournements
+      const clampedPitch = Math.max(-Math.PI/3, Math.min(Math.PI/3, pitch));
+      
+      // Appliquer directement à la caméra
+      camera.rotation.set(clampedPitch, yaw, 0, 'YXZ');
+      
+      // Debug occasionnel
+      if (Math.random() < 0.01) {
+        console.log('📱 Device orientation:', {
+          alpha: eventData.alpha.toFixed(1),
+          beta: eventData.beta.toFixed(1),
+          deltaAlpha: deltaAlpha.toFixed(1),
+          deltaBeta: deltaBeta.toFixed(1),
+          yaw: yaw.toFixed(3),
+          pitch: clampedPitch.toFixed(3)
+        });
+      }
 
       if (onDirectionChange) {
         const direction = new THREE.Vector3(0, 0, -1);
         direction.applyQuaternion(camera.quaternion);
         onDirectionChange(direction);
       }
-    }
-  });
+    };
+
+    console.log('📡 Adding direct deviceorientation listener');
+    window.addEventListener('deviceorientation', deviceOrientationHandler, false);
+    
+    return () => {
+      console.log('📡 Removing direct deviceorientation listener');
+      window.removeEventListener('deviceorientation', deviceOrientationHandler);
+    };
+  }, [camera, onDirectionChange]);
 
   return null;
 }
@@ -443,7 +446,6 @@ export const Scene360: React.FC<Scene360Props> = ({
 
           {useGyroscope && (
             <CameraController
-              orientation={orientation}
               onDirectionChange={() => {}} // Plus besoin
               recalibrateRef={recalibrateRef}
             />
