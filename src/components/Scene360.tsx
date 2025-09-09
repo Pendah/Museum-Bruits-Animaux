@@ -129,6 +129,13 @@ function CameraController({
       orientation.beta !== null &&
       orientation.gamma !== null
     ) {
+      // Debug des données reçues
+      console.log('🎮 CameraController frame:', {
+        alpha: orientation.alpha.toFixed(1),
+        beta: orientation.beta.toFixed(1),
+        gamma: orientation.gamma.toFixed(1)
+      });
+
       // Calibration initiale - définir l'orientation de départ
       if (!initialOrientation.current) {
         initialOrientation.current = {
@@ -136,6 +143,7 @@ function CameraController({
           beta: orientation.beta,
           gamma: orientation.gamma
         };
+        console.log('🧭 Calibration initiale:', initialOrientation.current);
         return; // Skip le premier frame pour la calibration
       }
 
@@ -406,6 +414,18 @@ export const Scene360: React.FC<Scene360Props> = ({
 }) => {
   const { orientation } = useDeviceOrientation();
   const recalibrateRef = useRef<(() => void) | null>(null);
+
+  // Debug orientation data
+  useEffect(() => {
+    if (useGyroscope && orientation) {
+      console.log('🎯 Scene360 orientation data:', {
+        alpha: orientation.alpha?.toFixed(1),
+        beta: orientation.beta?.toFixed(1),
+        gamma: orientation.gamma?.toFixed(1),
+        hasData: !!(orientation.alpha || orientation.beta || orientation.gamma)
+      });
+    }
+  }, [orientation, useGyroscope]);
 
   const handleRecalibrate = () => {
     if (recalibrateRef.current) {

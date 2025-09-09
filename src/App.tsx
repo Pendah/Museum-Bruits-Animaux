@@ -27,7 +27,7 @@ function App() {
 
   const [currentlyPlayingAnimal, setCurrentlyPlayingAnimal] =
     useState<Animal | null>(null);
-  const [useGyroscope, setUseGyroscope] = useState(false);
+  const [useGyroscope, setUseGyroscope] = useState(true); // Par défaut activé
   const [detectionState, setDetectionState] = useState<DetectionState | null>(
     null
   );
@@ -42,17 +42,14 @@ function App() {
   } = useSpatialAudio();
 
   const startListening = useCallback(async () => {
-    // Demander les permissions d'abord si nécessaire
-    if (permission !== "granted") {
+    // Si l'utilisateur a choisi le gyroscope, demander la permission d'abord
+    if (useGyroscope && permission !== "granted") {
+      console.log('🚀 Demande permission pour gyroscope...');
       const granted = await requestPermission();
       if (!granted) {
-        return; // Arrêter si permission refusée
+        console.warn('❌ Permission refusée, passage en mode manuel');
+        setUseGyroscope(false); // Fallback en mode manuel
       }
-      // Activer le gyroscope seulement après obtention de la permission
-      setUseGyroscope(true);
-    } else {
-      // Si déjà accordée, activer le gyroscope
-      setUseGyroscope(true);
     }
 
     await initializeAudioContext();
