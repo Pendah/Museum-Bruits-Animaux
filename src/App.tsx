@@ -194,7 +194,7 @@ function App() {
         onRequestPermission={requestPermission}
         useGyroscope={useGyroscope}
         onToggleNavigation={setUseGyroscope}
-        gyroscopeAvailable={permission === "granted"}
+        gyroscopeAvailable={permission !== "denied"}
         totalAnimals={animals.length}
         onRestartGame={restartGame}
         showVideoModal={gameState.showVideoModal}
