@@ -84,12 +84,19 @@ export const useDeviceOrientation = () => {
         }
         
         const isGranted = orientationResponse === "granted";
-        setPermission(isGranted ? "granted" : "denied");
         
         if (isGranted) {
           console.log('✅ Permissions gyroscope accordées');
+          setPermission("granted");
+          
+          // Sur iOS, attacher les événements immédiatement après la permission
+          if (isIOS()) {
+            console.log('🔄 Initialisation immédiate des événements iOS');
+            window.addEventListener("deviceorientation", handleOrientationImmediate);
+          }
         } else {
           console.warn('⚠️ Permission gyroscope refusée');
+          setPermission("denied");
         }
         
         return isGranted;
@@ -115,11 +122,26 @@ export const useDeviceOrientation = () => {
     }
   };
 
+  // Handler immédiat pour iOS après permission
+  const handleOrientationImmediate = (event: DeviceOrientationEvent) => {
+    console.log('📱 iOS données gyroscope reçues immédiatement:', {
+      alpha: event.alpha?.toFixed(1),
+      beta: event.beta?.toFixed(1), 
+      gamma: event.gamma?.toFixed(1)
+    });
+    
+    setOrientation({
+      alpha: event.alpha,
+      beta: event.beta,
+      gamma: event.gamma,
+    });
+  };
+
   useEffect(() => {
     const handleOrientation = (event: DeviceOrientationEvent) => {
-      // Debug pour iOS - vérifier si on reçoit des données
-      if (isIOS() && (event.alpha || event.beta || event.gamma)) {
-        console.log('📱 iOS données gyroscope reçues:', {
+      // Debug pour non-iOS uniquement (iOS utilise handleOrientationImmediate)
+      if (!isIOS() && (event.alpha || event.beta || event.gamma)) {
+        console.log('🤖 Android/autres données gyroscope reçues:', {
           alpha: event.alpha?.toFixed(1),
           beta: event.beta?.toFixed(1), 
           gamma: event.gamma?.toFixed(1)
@@ -134,25 +156,38 @@ export const useDeviceOrientation = () => {
     };
 
     if (permission === "granted") {
-      console.log('📡 Activation listener deviceorientation');
-      window.addEventListener("deviceorientation", handleOrientation);
-      
-      // Test après 2 secondes si on reçoit des données sur iOS
-      if (isIOS()) {
-        setTimeout(() => {
-          if (!orientation.alpha && !orientation.beta && !orientation.gamma) {
-            console.warn('⚠️ Aucune donnée gyroscope reçue après 2s sur iOS');
-            console.log('💡 Vérifiez que les permissions sont bien accordées et que l\'appareil bouge');
-          }
-        }, 2000);
+      // Sur iOS, ne pas ajouter de listener ici car il est déjà ajouté dans requestPermission
+      if (!isIOS()) {
+        console.log('📡 Activation listener deviceorientation (non-iOS)');
+        window.addEventListener("deviceorientation", handleOrientation);
       }
       
+      // Test après 2 secondes si on reçoit des données
+      const timeoutId = setTimeout(() => {
+        if (!orientation.alpha && !orientation.beta && !orientation.gamma) {
+          console.warn('⚠️ Aucune donnée gyroscope reçue après 2s');
+          console.log('💡 Vérifiez que les permissions sont bien accordées et que l\'appareil bouge');
+        }
+      }, 2000);
+      
       return () => {
-        console.log('📡 Désactivation listener deviceorientation');
-        window.removeEventListener("deviceorientation", handleOrientation);
+        clearTimeout(timeoutId);
+        if (!isIOS()) {
+          console.log('📡 Désactivation listener deviceorientation (non-iOS)');
+          window.removeEventListener("deviceorientation", handleOrientation);
+        }
       };
     }
-  }, [permission, orientation.alpha, orientation.beta, orientation.gamma]);
+  }, [permission]);
+
+  // Nettoyage des listeners au démontage
+  useEffect(() => {
+    return () => {
+      if (isIOS()) {
+        window.removeEventListener("deviceorientation", handleOrientationImmediate);
+      }
+    };
+  }, []);
 
   return {
     orientation,

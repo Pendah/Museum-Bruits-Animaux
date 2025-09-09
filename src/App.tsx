@@ -48,6 +48,11 @@ function App() {
       if (!granted) {
         return; // Arrêter si permission refusée
       }
+      // Activer le gyroscope seulement après obtention de la permission
+      setUseGyroscope(true);
+    } else {
+      // Si déjà accordée, activer le gyroscope
+      setUseGyroscope(true);
     }
 
     await initializeAudioContext();
