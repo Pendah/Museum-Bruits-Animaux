@@ -11,7 +11,7 @@ interface DetectionState {
   angle: number;
   isNearby: boolean;
   canClick: boolean;
-  hintLevel: 'far' | 'medium' | 'close' | 'veryClose';
+  hintLevel: "far" | "medium" | "close" | "veryClose";
   showHint: boolean;
 }
 
@@ -32,22 +32,24 @@ interface Scene360Props {
 // Composant pour le bouton de recalibration
 function CalibrationButton({ onRecalibrate }: { onRecalibrate: () => void }) {
   return (
-    <div style={{
-      position: 'absolute',
-      top: '20px',
-      left: '20px',
-      zIndex: 100
-    }}>
+    <div
+      style={{
+        position: "absolute",
+        top: "20px",
+        left: "20px",
+        zIndex: 100,
+      }}
+    >
       <button
         onClick={onRecalibrate}
         style={{
-          background: 'rgba(0, 0, 0, 0.7)',
-          border: 'none',
-          color: 'white',
-          padding: '8px 12px',
-          borderRadius: '6px',
-          cursor: 'pointer',
-          fontSize: '12px'
+          background: "rgba(0, 0, 0, 0.7)",
+          border: "none",
+          color: "white",
+          padding: "8px 12px",
+          borderRadius: "6px",
+          cursor: "pointer",
+          fontSize: "12px",
         }}
       >
         📍 Recalibrer
@@ -101,83 +103,65 @@ function CameraController({
   recalibrateRef,
 }: CameraControllerProps) {
   const { camera } = useThree();
-  const initialOrientation = useRef<{ alpha: number; beta: number; gamma: number } | null>(null);
-  const smoothedRotation = useRef(new THREE.Euler());
-  
-  // Fonction de recalibration
+  const initialOrientation = useRef<{
+    alpha: number;
+    beta: number;
+    gamma: number;
+  } | null>(null);
+
   const recalibrate = () => {
-    if (orientation.alpha !== null && orientation.beta !== null && orientation.gamma !== null) {
-      initialOrientation.current = {
-        alpha: orientation.alpha,
-        beta: orientation.beta,
-        gamma: orientation.gamma
-      };
-      // Reset la rotation lissée
-      smoothedRotation.current.set(0, 0, 0);
-      console.log('🧭 Gyroscope recalibré');
-    }
-  };
-  
-  // Exposer la fonction de recalibration
-  if (recalibrateRef) {
-    recalibrateRef.current = recalibrate;
-  }
-  
-  // Utiliser useEffect au lieu de useFrame pour ne déclencher que lors de changements
-  useEffect(() => {
     if (
       orientation.alpha !== null &&
       orientation.beta !== null &&
       orientation.gamma !== null
     ) {
-      console.log('🎮 CameraController orientation changed:', {
-        alpha: orientation.alpha.toFixed(1),
-        beta: orientation.beta.toFixed(1),
-        gamma: orientation.gamma.toFixed(1)
-      });
+      initialOrientation.current = {
+        alpha: orientation.alpha,
+        beta: orientation.beta,
+        gamma: orientation.gamma,
+      };
+      console.log("🧭 Gyroscope recalibré");
+    }
+  };
 
-      // Calibration initiale - définir l'orientation de départ
+  if (recalibrateRef) {
+    recalibrateRef.current = recalibrate;
+  }
+
+  useFrame(() => {
+    if (
+      orientation.alpha !== null &&
+      orientation.beta !== null &&
+      orientation.gamma !== null
+    ) {
       if (!initialOrientation.current) {
         initialOrientation.current = {
           alpha: orientation.alpha,
           beta: orientation.beta,
-          gamma: orientation.gamma
+          gamma: orientation.gamma,
         };
-        console.log('🧭 Calibration initiale:', initialOrientation.current);
-        return; // Skip la première fois pour la calibration
+        return;
       }
 
-      // Calculer les deltas par rapport à la position initiale
       const deltaAlpha = orientation.alpha - initialOrientation.current.alpha;
       const deltaBeta = orientation.beta - initialOrientation.current.beta;
-      
-      // Gestion du wrap-around pour alpha (0-360°)
+
       let normalizedAlpha = deltaAlpha;
       if (normalizedAlpha > 180) normalizedAlpha -= 360;
       if (normalizedAlpha < -180) normalizedAlpha += 360;
 
-      // Détection d'Android pour inverser le pitch
       const isAndroid = /Android/i.test(navigator.userAgent);
-      
-      // Conversion en radians avec mapping amélioré
-      const yaw = -(normalizedAlpha * Math.PI) / 180; // Rotation horizontale (Y)
-      const pitch = isAndroid ? (deltaBeta * Math.PI) / 180 : -(deltaBeta * Math.PI) / 180; // Rotation verticale (X)
 
-      // Clamping pour éviter les rotations extrêmes
-      const clampedPitch = Math.max(-Math.PI/3, Math.min(Math.PI/3, pitch));
-      
-      // Pas de lissage pour une réponse plus directe
-      const targetRotation = new THREE.Euler(clampedPitch, yaw, 0, 'YXZ');
-      
-      // Appliquer directement la rotation à la caméra
+      const yaw = -(normalizedAlpha * Math.PI) / 180;
+      const pitch = isAndroid
+        ? (deltaBeta * Math.PI) / 180
+        : -(deltaBeta * Math.PI) / 180;
+
+      const clampedPitch = Math.max(-Math.PI / 3, Math.min(Math.PI / 3, pitch));
+
+      const targetRotation = new THREE.Euler(clampedPitch, yaw, 0, "YXZ");
+
       camera.rotation.copy(targetRotation);
-      
-      console.log('🎥 Camera rotation applied:', {
-        deltaAlpha: normalizedAlpha.toFixed(1),
-        deltaBeta: deltaBeta.toFixed(1),
-        yaw: yaw.toFixed(3),
-        pitch: clampedPitch.toFixed(3)
-      });
 
       if (onDirectionChange) {
         const direction = new THREE.Vector3(0, 0, -1);
@@ -185,7 +169,7 @@ function CameraController({
         onDirectionChange(direction);
       }
     }
-  }, [orientation, camera, onDirectionChange]);
+  });
 
   return null;
 }
@@ -224,11 +208,7 @@ function SoundWave({
 }
 
 // Marqueur 2D avec animation d'ondes (non cliquable)
-function AnimalMarker({
-  animal,
-}: {
-  animal: Animal;
-}) {
+function AnimalMarker({ animal }: { animal: Animal }) {
   const { camera } = useThree();
   const groupRef = useRef<THREE.Group>(null);
 
@@ -278,12 +258,7 @@ function AnimalMarkers({
 
         if (!isPlaying) return null; // Afficher seulement l'animal actuel
 
-        return (
-          <AnimalMarker
-            key={animal.id}
-            animal={animal}
-          />
-        );
+        return <AnimalMarker key={animal.id} animal={animal} />;
       })}
     </>
   );
@@ -306,7 +281,7 @@ function AnimalDetector({
   const { camera } = useThree();
   const frameCount = useRef(0);
   const lastHintTime = useRef(0);
-  const currentHintLevel = useRef('');
+  const currentHintLevel = useRef("");
 
   useFrame(() => {
     frameCount.current++;
@@ -335,25 +310,24 @@ function AnimalDetector({
     const angle = normalizedCameraDir.angleTo(normalizedAnimalDir);
     const angleDegrees = (angle * 180) / Math.PI;
 
-
     const isNearby = angleDegrees <= 35;
     const canClick = angleDegrees <= 20;
 
     // Déterminer le niveau d'indice
-    let hintLevel: 'far' | 'medium' | 'close' | 'veryClose' = 'far';
-    if (angleDegrees <= 20) hintLevel = 'veryClose';
-    else if (angleDegrees <= 35) hintLevel = 'close';
-    else if (angleDegrees <= 70) hintLevel = 'medium';
+    let hintLevel: "far" | "medium" | "close" | "veryClose" = "far";
+    if (angleDegrees <= 20) hintLevel = "veryClose";
+    else if (angleDegrees <= 35) hintLevel = "close";
+    else if (angleDegrees <= 70) hintLevel = "medium";
 
     // Gestion des hints (logique simplifiée)
     const now = Date.now();
     const levelChanged = hintLevel !== currentHintLevel.current;
-    if (levelChanged && hintLevel !== 'far') {
+    if (levelChanged && hintLevel !== "far") {
       lastHintTime.current = now;
       currentHintLevel.current = hintLevel;
 
       // Feedback haptique
-      if ('vibrate' in navigator) {
+      if ("vibrate" in navigator) {
         const vibrationPatterns: Record<string, number[]> = {
           medium: [100],
           close: [100, 50, 100],
@@ -366,8 +340,9 @@ function AnimalDetector({
       }
     }
 
-    const shouldShowHint = levelChanged && hintLevel !== 'far';
-    const hintStillVisible = (now - lastHintTime.current) < 2000 && currentHintLevel.current !== '';
+    const shouldShowHint = levelChanged && hintLevel !== "far";
+    const hintStillVisible =
+      now - lastHintTime.current < 2000 && currentHintLevel.current !== "";
 
     // État de détection
     const detectionState: DetectionState = {
@@ -376,7 +351,7 @@ function AnimalDetector({
       isNearby,
       canClick,
       hintLevel,
-      showHint: shouldShowHint || hintStillVisible
+      showHint: shouldShowHint || hintStillVisible,
     };
 
     if (onDetectionUpdate) {
@@ -389,8 +364,15 @@ function AnimalDetector({
     }
 
     // Auto-découverte
-    if (canClick && gameState && !gameState.discoveredAnimals.includes(currentlyPlayingAnimal.id)) {
-      console.log('🎯 Animal découvert automatiquement !', currentlyPlayingAnimal.name);
+    if (
+      canClick &&
+      gameState &&
+      !gameState.discoveredAnimals.includes(currentlyPlayingAnimal.id)
+    ) {
+      console.log(
+        "🎯 Animal découvert automatiquement !",
+        currentlyPlayingAnimal.name
+      );
       if (onAnimalDiscovered) {
         onAnimalDiscovered(currentlyPlayingAnimal);
       }
@@ -416,13 +398,16 @@ export const Scene360: React.FC<Scene360Props> = ({
   // Debug orientation data
   useEffect(() => {
     if (useGyroscope && orientation && Math.random() < 0.05) {
-      console.log('🎯 Scene360 orientation data:', {
+      console.log("🎯 Scene360 orientation data:", {
         alpha: orientation.alpha?.toFixed(1),
         beta: orientation.beta?.toFixed(1),
         gamma: orientation.gamma?.toFixed(1),
         hasData: !!(orientation.alpha || orientation.beta || orientation.gamma),
         useGyroscope,
-        hasNonNullData: orientation.alpha !== null && orientation.beta !== null && orientation.gamma !== null
+        hasNonNullData:
+          orientation.alpha !== null &&
+          orientation.beta !== null &&
+          orientation.gamma !== null,
       });
     }
   }, [orientation, useGyroscope]);
