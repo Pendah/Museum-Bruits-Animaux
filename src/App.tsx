@@ -168,16 +168,45 @@ function App() {
 
   return (
     <div className="app">
-      <Scene360
-        textureUrl="/assets/textures/forest-night-360.jpg"
-        useGyroscope={useGyroscope}
-        animals={animals}
-        currentlyPlayingAnimal={currentlyPlayingAnimal}
-        onDetectionUpdate={handleDetectionUpdate}
-        updateVolumeByAngle={updateVolumeByAngle}
-        gameState={gameState}
-        onAnimalDiscovered={handleAnimalDiscovered}
-      />
+      {/* Scene360 seulement si gyroscope désactivé OU permission accordée */}
+      {(!useGyroscope || permission === "granted") && (
+        <Scene360
+          textureUrl="/assets/textures/forest-night-360.jpg"
+          useGyroscope={useGyroscope}
+          animals={animals}
+          currentlyPlayingAnimal={currentlyPlayingAnimal}
+          onDetectionUpdate={handleDetectionUpdate}
+          updateVolumeByAngle={updateVolumeByAngle}
+          gameState={gameState}
+          onAnimalDiscovered={handleAnimalDiscovered}
+        />
+      )}
+
+      {/* Message d'attente si gyroscope activé mais permission pas encore accordée */}
+      {useGyroscope && permission !== "granted" && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: '#000',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: 'white',
+          fontSize: '18px',
+          textAlign: 'center',
+          zIndex: 1000
+        }}>
+          <div>
+            <p>🔄 Initialisation du gyroscope...</p>
+            <p style={{fontSize: '14px', opacity: 0.7, marginTop: '10px'}}>
+              Cliquez sur "Commencer l'exploration" pour autoriser l'accès
+            </p>
+          </div>
+        </div>
+      )}
 
       <GameUI
         isListening={gameState.isListening}
