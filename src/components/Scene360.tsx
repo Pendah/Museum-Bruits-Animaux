@@ -123,31 +123,18 @@ function CameraController({
     recalibrateRef.current = recalibrate;
   }
   
-  useFrame(() => {
-    // Debug d'entrée dans useFrame
-    if (Math.random() < 0.001) {
-      console.log('🎮 CameraController useFrame called:', {
-        hasOrientation: !!(orientation.alpha !== null && orientation.beta !== null && orientation.gamma !== null),
-        alpha: orientation.alpha,
-        beta: orientation.beta,
-        gamma: orientation.gamma
-      });
-    }
-
+  // Utiliser useEffect au lieu de useFrame pour ne déclencher que lors de changements
+  useEffect(() => {
     if (
       orientation.alpha !== null &&
       orientation.beta !== null &&
       orientation.gamma !== null
     ) {
-      // Debug des données reçues (réduit)
-      if (Math.random() < 0.01) { // 1% des frames seulement
-        console.log('🎮 CameraController frame:', {
-          alpha: orientation.alpha.toFixed(1),
-          beta: orientation.beta.toFixed(1),
-          gamma: orientation.gamma.toFixed(1),
-          hasInitial: !!initialOrientation.current
-        });
-      }
+      console.log('🎮 CameraController orientation changed:', {
+        alpha: orientation.alpha.toFixed(1),
+        beta: orientation.beta.toFixed(1),
+        gamma: orientation.gamma.toFixed(1)
+      });
 
       // Calibration initiale - définir l'orientation de départ
       if (!initialOrientation.current) {
@@ -157,7 +144,7 @@ function CameraController({
           gamma: orientation.gamma
         };
         console.log('🧭 Calibration initiale:', initialOrientation.current);
-        return; // Skip le premier frame pour la calibration
+        return; // Skip la première fois pour la calibration
       }
 
       // Calculer les deltas par rapport à la position initiale
@@ -175,29 +162,22 @@ function CameraController({
       // Conversion en radians avec mapping amélioré
       const yaw = -(normalizedAlpha * Math.PI) / 180; // Rotation horizontale (Y)
       const pitch = isAndroid ? (deltaBeta * Math.PI) / 180 : -(deltaBeta * Math.PI) / 180; // Rotation verticale (X)
-      // const roll = (deltaGamma * Math.PI) / 180; // Roulis (Z) - désactivé
 
       // Clamping pour éviter les rotations extrêmes
       const clampedPitch = Math.max(-Math.PI/3, Math.min(Math.PI/3, pitch));
       
-      // Lissage des mouvements pour éviter les secousses
-      const smoothingFactor = 0.1;
+      // Pas de lissage pour une réponse plus directe
       const targetRotation = new THREE.Euler(clampedPitch, yaw, 0, 'YXZ');
       
-      smoothedRotation.current.x = THREE.MathUtils.lerp(smoothedRotation.current.x, targetRotation.x, smoothingFactor);
-      smoothedRotation.current.y = THREE.MathUtils.lerp(smoothedRotation.current.y, targetRotation.y, smoothingFactor);
+      // Appliquer directement la rotation à la caméra
+      camera.rotation.copy(targetRotation);
       
-      // Appliquer la rotation à la caméra
-      camera.rotation.copy(smoothedRotation.current);
-      
-      // Debug de la rotation appliquée
-      if (Math.random() < 0.005) { // Debug rare
-        console.log('🎥 Camera rotation applied:', {
-          x: camera.rotation.x.toFixed(3),
-          y: camera.rotation.y.toFixed(3), 
-          z: camera.rotation.z.toFixed(3)
-        });
-      }
+      console.log('🎥 Camera rotation applied:', {
+        deltaAlpha: normalizedAlpha.toFixed(1),
+        deltaBeta: deltaBeta.toFixed(1),
+        yaw: yaw.toFixed(3),
+        pitch: clampedPitch.toFixed(3)
+      });
 
       if (onDirectionChange) {
         const direction = new THREE.Vector3(0, 0, -1);
@@ -205,7 +185,7 @@ function CameraController({
         onDirectionChange(direction);
       }
     }
-  });
+  }, [orientation, camera, onDirectionChange]);
 
   return null;
 }
@@ -355,10 +335,6 @@ function AnimalDetector({
     const angle = normalizedCameraDir.angleTo(normalizedAnimalDir);
     const angleDegrees = (angle * 180) / Math.PI;
 
-    // Debug simple de l'angle
-    if (frameCount.current % 60 === 0) {
-      console.log(`🎯 ${currentlyPlayingAnimal.name} | Angle: ${angleDegrees.toFixed(1)}°`);
-    }
 
     const isNearby = angleDegrees <= 35;
     const canClick = angleDegrees <= 20;
