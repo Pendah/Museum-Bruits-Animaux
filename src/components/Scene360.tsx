@@ -136,15 +136,24 @@ function CameraController({
       if (deltaAlpha > 180) deltaAlpha -= 360;
       if (deltaAlpha < -180) deltaAlpha += 360;
 
-      // Convertir en rotation Three.js (simple)
-      const yaw = -(deltaAlpha * Math.PI) / 180;
-      const pitch = -(deltaBeta * Math.PI) / 180;
+      // Convertir en rotation Three.js (inverser les contrôles pour iOS)
+      const yaw = (deltaAlpha * Math.PI) / 180; // Inversé
+      const pitch = (deltaBeta * Math.PI) / 180; // Inversé
       
       // Limiter le pitch pour éviter les retournements
       const clampedPitch = Math.max(-Math.PI/3, Math.min(Math.PI/3, pitch));
       
-      // Appliquer directement à la caméra
-      camera.rotation.set(clampedPitch, yaw, 0, 'YXZ');
+      // Lissage léger pour éviter les sauts
+      const currentRotation = camera.rotation.clone();
+      const targetRotation = new THREE.Euler(clampedPitch, yaw, 0, 'YXZ');
+      
+      // Interpolation simple pour lisser
+      const smoothing = 0.8; // Plus proche de 1 = plus direct
+      const smoothedX = currentRotation.x * (1 - smoothing) + targetRotation.x * smoothing;
+      const smoothedY = currentRotation.y * (1 - smoothing) + targetRotation.y * smoothing;
+      
+      // Appliquer la rotation lissée à la caméra
+      camera.rotation.set(smoothedX, smoothedY, 0, 'YXZ');
       
       // Debug occasionnel
       if (Math.random() < 0.01) {
