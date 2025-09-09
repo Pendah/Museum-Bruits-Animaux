@@ -129,12 +129,15 @@ function CameraController({
       orientation.beta !== null &&
       orientation.gamma !== null
     ) {
-      // Debug des données reçues
-      console.log('🎮 CameraController frame:', {
-        alpha: orientation.alpha.toFixed(1),
-        beta: orientation.beta.toFixed(1),
-        gamma: orientation.gamma.toFixed(1)
-      });
+      // Debug des données reçues (réduit)
+      if (Math.random() < 0.01) { // 1% des frames seulement
+        console.log('🎮 CameraController frame:', {
+          alpha: orientation.alpha.toFixed(1),
+          beta: orientation.beta.toFixed(1),
+          gamma: orientation.gamma.toFixed(1),
+          hasInitial: !!initialOrientation.current
+        });
+      }
 
       // Calibration initiale - définir l'orientation de départ
       if (!initialOrientation.current) {
@@ -176,6 +179,15 @@ function CameraController({
       
       // Appliquer la rotation à la caméra
       camera.rotation.copy(smoothedRotation.current);
+      
+      // Debug de la rotation appliquée
+      if (Math.random() < 0.005) { // Debug rare
+        console.log('🎥 Camera rotation applied:', {
+          x: camera.rotation.x.toFixed(3),
+          y: camera.rotation.y.toFixed(3), 
+          z: camera.rotation.z.toFixed(3)
+        });
+      }
 
       if (onDirectionChange) {
         const direction = new THREE.Vector3(0, 0, -1);
@@ -422,7 +434,9 @@ export const Scene360: React.FC<Scene360Props> = ({
         alpha: orientation.alpha?.toFixed(1),
         beta: orientation.beta?.toFixed(1),
         gamma: orientation.gamma?.toFixed(1),
-        hasData: !!(orientation.alpha || orientation.beta || orientation.gamma)
+        hasData: !!(orientation.alpha || orientation.beta || orientation.gamma),
+        useGyroscope,
+        hasNonNullData: orientation.alpha !== null && orientation.beta !== null && orientation.gamma !== null
       });
     }
   }, [orientation, useGyroscope]);
