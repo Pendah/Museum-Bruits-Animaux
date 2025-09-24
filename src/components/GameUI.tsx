@@ -47,7 +47,7 @@ export const GameUI: React.FC<GameUIProps> = ({
   showVideoModal,
 }) => {
   const [showSettingsModal, setShowSettingsModal] = useState(false);
-  
+
   const isGameCompleted =
     discoveredAnimals.length === totalAnimals &&
     !showVideoModal &&
@@ -93,19 +93,19 @@ export const GameUI: React.FC<GameUIProps> = ({
             >
               <div className="modal-header">
                 <h2>Paramètres</h2>
-                <button 
-                  className="close-btn" 
+                <button
+                  className="close-btn"
                   onClick={() => setShowSettingsModal(false)}
                 >
                   ×
                 </button>
               </div>
-              
+
               <div className="modal-content">
                 <h3>Mode de navigation</h3>
                 <div className="navigation-choice">
-                  <div 
-                    className={`choice-option ${!useGyroscope ? 'active' : ''}`}
+                  <div
+                    className={`choice-option ${!useGyroscope ? "active" : ""}`}
                     onClick={() => {
                       onToggleNavigation(false);
                       setShowSettingsModal(false);
@@ -115,10 +115,12 @@ export const GameUI: React.FC<GameUIProps> = ({
                     <span className="choice-label">Tactile</span>
                     <span className="choice-desc">Glissez votre doigt</span>
                   </div>
-                  
+
                   {gyroscopeAvailable && (
-                    <div 
-                      className={`choice-option ${useGyroscope ? 'active' : ''}`}
+                    <div
+                      className={`choice-option ${
+                        useGyroscope ? "active" : ""
+                      }`}
                       onClick={() => {
                         onToggleNavigation(true);
                         setShowSettingsModal(false);
@@ -154,7 +156,10 @@ export const GameUI: React.FC<GameUIProps> = ({
 
         {/* Icône paramètres pendant le jeu */}
         {isListening && (
-          <div className="settings-icon" onClick={() => setShowSettingsModal(true)}>
+          <div
+            className="settings-icon"
+            onClick={() => setShowSettingsModal(true)}
+          >
             ⚙️
           </div>
         )}
@@ -169,20 +174,20 @@ export const GameUI: React.FC<GameUIProps> = ({
             >
               <h2>Mode de navigation</h2>
               <p>Choisissez votre mode de navigation préféré :</p>
-              
+
               <div className="navigation-choice">
-                <div 
-                  className={`choice-option ${!useGyroscope ? 'active' : ''}`}
+                <div
+                  className={`choice-option ${!useGyroscope ? "active" : ""}`}
                   onClick={() => onToggleNavigation(false)}
                 >
                   <span className="choice-icon">👆</span>
                   <span className="choice-label">Tactile</span>
                   <span className="choice-desc">Glissez votre doigt</span>
                 </div>
-                
+
                 {gyroscopeAvailable && (
-                  <div 
-                    className={`choice-option ${useGyroscope ? 'active' : ''}`}
+                  <div
+                    className={`choice-option ${useGyroscope ? "active" : ""}`}
                     onClick={() => onToggleNavigation(true)}
                   >
                     <span className="choice-icon">📱</span>
@@ -277,7 +282,7 @@ export const GameUI: React.FC<GameUIProps> = ({
               animate={{ x: 0, opacity: 1 }}
               transition={{ delay: index * 0.1 }}
             >
-              🐾
+              <img width="25px" src="assets/footprint.png" />
             </motion.div>
           ))}
         </div>

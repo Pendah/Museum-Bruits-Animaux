@@ -8,7 +8,7 @@ export const animals: Animal[] = [
       "La martre des pins est un petit carnivore nocturne de la famille des mustélidés. Elle émet des cris aigus et des glapissements pour communiquer, particulièrement active durant les nuits d'été.",
     soundFile: "/assets/sounds/martre.mp3",
     videoFile: "/assets/videos/martre.mp4",
-    position: { x: -12, y: 2, z: -8 },
+    position: { x: 0, y: 2, z: -8 },
     detectionRadius: 4,
   },
   {
@@ -18,7 +18,7 @@ export const animals: Animal[] = [
       "Le renard roux est un mammifère carnivore très adaptable. La nuit, il émet différents cris pour communiquer avec ses congénères. Son glapissement aigu peut porter sur de longues distances.",
     soundFile: "/assets/sounds/fox.mp3",
     videoFile: "/assets/videos/fox.mp4",
-    position: { x: 10, y: 0, z: -12 },
+    position: { x: 14, y: -8, z: -12 },
     detectionRadius: 4,
   },
   {
@@ -28,7 +28,7 @@ export const animals: Animal[] = [
       "Le sanglier est un mammifère omnivore nocturne très présent dans les forêts européennes. Il émet des grognements sourds et des soufflements, surtout lors de ses déplacements en groupe la nuit.",
     soundFile: "/assets/sounds/wildboar.mp3",
     videoFile: "/assets/videos/wildboar.mp4",
-    position: { x: 8, y: 0, z: 14 },
+    position: { x: 12, y: -4, z: 14 },
     detectionRadius: 4,
   },
   {
@@ -38,7 +38,7 @@ export const animals: Animal[] = [
       "Le chevreuil est un cervidé élégant et discret qui habite les forêts et les lisières. La nuit, il émet des aboiements courts et aigus pour communiquer avec ses congénères ou signaler un danger.",
     soundFile: "/assets/sounds/deer.mp3",
     videoFile: "/assets/videos/deer.mp4",
-    position: { x: -8, y: 1, z: 12 },
+    position: { x: -10, y: -3, z: 12 },
     detectionRadius: 4,
   },
   {
@@ -68,7 +68,7 @@ export const animals: Animal[] = [
       "Le blaireau européen est un mammifère nocturne de la famille des mustélidés. Il émet des grognements sourds, des soufflements et des cris gutturaux lors de ses activités nocturnes de fouissage et de recherche de nourriture.",
     soundFile: "/assets/sounds/blaireau.mp3",
     videoFile: "/assets/videos/blaireau.mp4",
-    position: { x: 6, y: 0, z: 10 },
+    position: { x: -7, y: -3, z: 10 },
     detectionRadius: 4,
   },
 ];
