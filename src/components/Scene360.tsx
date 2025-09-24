@@ -1,4 +1,4 @@
-import { useRef, useEffect, Suspense } from "react";
+import { useRef, useEffect, useCallback, Suspense } from "react";
 import { Canvas, useFrame, useThree, useLoader } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
@@ -86,6 +86,14 @@ function ForestEnvironment({ textureUrl }: { textureUrl?: string }) {
   );
 }
 
+// Fonction pour normaliser un angle entre -180 et 180
+const normalizeAngle = (angle: number) => {
+  let normalized = angle % 360;
+  if (normalized > 180) normalized -= 360;
+  if (normalized < -180) normalized += 360;
+  return normalized;
+};
+
 interface CameraControllerProps {
   onDirectionChange?: (direction: THREE.Vector3) => void;
   recalibrateRef?: React.MutableRefObject<(() => void) | null>;
@@ -97,16 +105,23 @@ function CameraController({
 }: CameraControllerProps) {
   const { camera } = useThree();
   const initialOrientation = useRef<{ alpha: number; beta: number } | null>(null);
-  
+  const previousRotation = useRef<{ yaw: number; pitch: number } | null>(null);
+
+  // Fonction pour calculer la différence d'angle la plus courte
+  const angleDifference = useCallback((a: number, b: number) => {
+    const diff = a - b;
+    return normalizeAngle(diff);
+  }, []);
+
   const recalibrate = () => {
     initialOrientation.current = null;
+    previousRotation.current = null;
   };
 
   if (recalibrateRef) {
     recalibrateRef.current = recalibrate;
   }
 
-  // Approche directe comme l'exemple 2020
   useEffect(() => {
     if (typeof window.DeviceOrientationEvent === 'undefined') {
       console.warn('DeviceOrientationEvent not supported');
@@ -125,33 +140,40 @@ function CameraController({
         return;
       }
 
-      // Calculer la différence depuis la calibration
-      let deltaAlpha = eventData.alpha - initialOrientation.current.alpha;
-      const deltaBeta = eventData.beta - initialOrientation.current.beta;
+      // Calculer les deltas en utilisant la différence d'angle la plus courte
+      const deltaAlpha = angleDifference(eventData.alpha, initialOrientation.current.alpha);
+      const deltaBeta = angleDifference(eventData.beta, initialOrientation.current.beta);
       
-      // Gérer le wraparound 0-360°
-      if (deltaAlpha > 180) deltaAlpha -= 360;
-      if (deltaAlpha < -180) deltaAlpha += 360;
-
-      // Convertir en rotation Three.js (inverser les contrôles pour iOS)
-      const yaw = (deltaAlpha * Math.PI) / 180; // Inversé
-      const pitch = (deltaBeta * Math.PI) / 180; // Inversé
+      // Convertir en rotation Three.js
+      const targetYaw = (deltaAlpha * Math.PI) / 180;
+      const targetPitch = Math.max(-Math.PI/3, Math.min(Math.PI/3, (deltaBeta * Math.PI) / 180));
       
-      // Limiter le pitch pour éviter les retournements
-      const clampedPitch = Math.max(-Math.PI/3, Math.min(Math.PI/3, pitch));
+      // Si c'est la première rotation calculée, l'utiliser directement
+      if (!previousRotation.current) {
+        previousRotation.current = { yaw: targetYaw, pitch: targetPitch };
+        camera.rotation.set(targetPitch, targetYaw, 0, 'YXZ');
+        return;
+      }
       
-      // Lissage léger pour éviter les sauts
-      const currentRotation = camera.rotation.clone();
-      const targetRotation = new THREE.Euler(clampedPitch, yaw, 0, 'YXZ');
+      // Calculer la différence entre la rotation actuelle et la cible
+      const yawDiff = angleDifference(targetYaw * 180 / Math.PI, previousRotation.current.yaw * 180 / Math.PI) * Math.PI / 180;
+      const pitchDiff = targetPitch - previousRotation.current.pitch;
       
-      // Interpolation simple pour lisser
-      const smoothing = 0.8; // Plus proche de 1 = plus direct
-      const smoothedX = currentRotation.x * (1 - smoothing) + targetRotation.x * smoothing;
-      const smoothedY = currentRotation.y * (1 - smoothing) + targetRotation.y * smoothing;
+      // Limiter les changements brusques
+      const maxChange = Math.PI / 36; // ~5 degrés maximum par frame
+      const clampedYawDiff = Math.max(-maxChange, Math.min(maxChange, yawDiff));
+      const clampedPitchDiff = Math.max(-maxChange, Math.min(maxChange, pitchDiff));
       
-      // Appliquer la rotation lissée à la caméra
-      camera.rotation.set(smoothedX, smoothedY, 0, 'YXZ');
+      // Appliquer le lissage
+      const smoothing = 0.7;
+      const newYaw = previousRotation.current.yaw + clampedYawDiff * smoothing;
+      const newPitch = previousRotation.current.pitch + clampedPitchDiff * smoothing;
       
+      // Sauvegarder les nouvelles valeurs
+      previousRotation.current = { yaw: newYaw, pitch: newPitch };
+      
+      // Appliquer à la caméra
+      camera.rotation.set(newPitch, newYaw, 0, 'YXZ');
 
       if (onDirectionChange) {
         const direction = new THREE.Vector3(0, 0, -1);
@@ -165,7 +187,7 @@ function CameraController({
     return () => {
       window.removeEventListener('deviceorientation', deviceOrientationHandler);
     };
-  }, [camera, onDirectionChange]);
+  }, [camera, onDirectionChange, angleDifference]);
 
   return null;
 }
