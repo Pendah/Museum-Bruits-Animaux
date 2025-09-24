@@ -277,7 +277,7 @@ export const GameUI: React.FC<GameUIProps> = ({
               animate={{ x: 0, opacity: 1 }}
               transition={{ delay: index * 0.1 }}
             >
-              🦉
+              🐾
             </motion.div>
           ))}
         </div>
